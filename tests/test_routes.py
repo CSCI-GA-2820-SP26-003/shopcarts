@@ -23,6 +23,7 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
+from tests.factories import ShopcartFactory
 from service.common import status
 from service.models import db, Shopcart
 
@@ -30,12 +31,13 @@ DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
 
+BASE_URL = "/shopcarts"
 
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
-class TestYourResourceService(TestCase):
+class TestShopcartService(TestCase):
     """REST API Server Tests"""
 
     @classmethod
@@ -67,9 +69,44 @@ class TestYourResourceService(TestCase):
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
 
-    def test_index(self):
-        """It should call the home page"""
-        resp = self.client.get("/")
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+    def test_create_shopcart(self):
+        """It should Create a new Shopcart"""
+        shopcart = ShopcartFactory()
+        resp = self.client.post(
+            BASE_URL, json=shopcart.serialize(), content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
-    # Todo: Add your test cases here...
+        # Make sure location header is set
+        location = resp.headers.get("Location", None)
+        self.assertIsNotNone(location)
+
+        # Check the data is correct
+        new_shopcart = resp.get_json()
+        self.assertEqual(new_shopcart["name"], shopcart.name, "Names does not match")
+        self.assertEqual(new_shopcart["userid"], shopcart.name, "UserID does not match")
+        self.assertEqual(
+            new_shopcart["address"], shopcart.address, "Address does not match"
+        )
+        self.assertEqual(
+            new_shopcart["email"], shopcart.email, "Email does not match"
+            )
+        self.assertEqual(
+            new_shopcart["active"], shopcart.active, "Active state does not match"
+        )
+
+        # Check that the location header was correct by getting it
+        resp = self.client.get(location, content_type="application/json")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        new_shopcart = resp.get_json()
+        self.assertEqual(new_shopcart["name"], shopcart.name, "Names does not match")
+        self.assertEqual(new_shopcart["userid"], shopcart.name, "UserID does not match")
+        self.assertEqual(
+            new_shopcart["address"], shopcart.address, "Address does not match"
+        )
+        self.assertEqual(
+            new_shopcart["email"], shopcart.email, "Email does not match"
+            )
+        self.assertEqual(
+            new_shopcart["active"], shopcart.active, "Active state does not match"
+        )

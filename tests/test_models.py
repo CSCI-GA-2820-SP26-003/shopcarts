@@ -21,6 +21,7 @@ Test cases for Pet Model
 # pylint: disable=duplicate-code
 import os
 import logging
+from unittest.mock import patch
 from unittest import TestCase
 from wsgi import app
 from service.models import Shopcart, DataValidationError, db
@@ -80,4 +81,20 @@ class TestShopcart(TestCase):
         self.assertEqual(data.userid, shopcart.userid)
         self.assertEqual(data.active, shopcart.active)
 
-    # Todo: Add your test cases here...
+    def test_add_a_shopcart(self):
+        """It should Create an shopcart and add it to the database"""
+        shopcarts = Shopcart.all()
+        self.assertEqual(shopcarts, [])
+        shopcart = ShopcartFactory()
+        shopcart.create()
+        # Assert that it was assigned an id and shows up in the database
+        self.assertIsNotNone(shopcart.id)
+        shopcarts = Shopcart.all()
+        self.assertEqual(len(shopcarts), 1)
+
+    @patch("service.models.db.session.commit")
+    def test_add_shopcart_failed(self, exception_mock):
+        """It should not create an Shopcart on database error"""
+        exception_mock.side_effect = Exception()
+        shopcart = ShopcartFactory()
+        self.assertRaises(DataValidationError, shopcart.create)
