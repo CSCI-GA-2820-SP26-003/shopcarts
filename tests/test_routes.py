@@ -24,7 +24,8 @@ import logging
 from unittest import TestCase
 from wsgi import app
 from service.common import status
-from service.models import db, Shopcart
+from service.models import db, Shopcart, Item
+from .factories import ShopcartFactory, ItemFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -56,6 +57,7 @@ class TestYourResourceService(TestCase):
     def setUp(self):
         """Runs before each test"""
         self.client = app.test_client()
+        db.session.query(Item).delete()
         db.session.query(Shopcart).delete()  # clean up the last tests
         db.session.commit()
 
@@ -72,4 +74,47 @@ class TestYourResourceService(TestCase):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-    # Todo: Add your test cases here...
+    def test_get_shopcart(self):
+        """It should return a single Shopcart"""
+        shopcart = ShopcartFactory()
+        shopcart.create()
+
+        resp = self.client.get(f"/shopcarts/{shopcart.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(data["id"], shopcart.id)
+        self.assertEqual(data["name"], shopcart.name)
+        self.assertEqual(data["userid"], shopcart.userid)
+        self.assertEqual(data["email"], shopcart.email)
+        self.assertEqual(data["address"], shopcart.address)
+        self.assertEqual(data["active"], shopcart.active)
+        self.assertEqual(data["items"], [])
+        self.assertEqual(data["total_price"], 0)
+
+    def test_get_shopcart_with_items(self):
+        """It should return a Shopcart with its items and total_price"""
+        shopcart = ShopcartFactory()
+        shopcart.create()
+
+        item = ItemFactory(shopcart_id=shopcart.id)
+        item.create()
+
+        resp = self.client.get(f"/shopcarts/{shopcart.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data["items"]), 1)
+        self.assertEqual(data["items"][0]["product_id"], item.product_id)
+        self.assertEqual(data["items"][0]["quantity"], item.quantity)
+        self.assertAlmostEqual(data["items"][0]["price"], item.price, places=2)
+        self.assertAlmostEqual(
+            data["total_price"], item.price * item.quantity, places=2
+        )
+
+    def test_get_shopcart_not_found(self):
+        """It should return 404 when Shopcart is not found"""
+        resp = self.client.get("/shopcarts/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        data = resp.get_json()
+        self.assertIn("0", data["message"])
