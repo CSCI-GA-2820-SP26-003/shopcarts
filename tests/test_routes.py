@@ -25,7 +25,7 @@ from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.models import db, Shopcart
-
+from tests.factories import ShopcartFactory
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
@@ -73,3 +73,20 @@ class TestYourResourceService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     # Todo: Add your test cases here...
+    ######################################################################
+    # DELETE A SHOPCART
+    ######################################################################
+    def test_delete_shopcart_success(self):
+        """It should Delete an existing Shopcart"""
+        cart = ShopcartFactory()
+        cart.create()
+        cart_id = cart.id
+
+        resp = self.client.delete(f"/shopcarts/{cart_id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_shopcart_not_found(self):
+        """It should not Delete a Shopcart that does not exist"""
+        resp = self.client.delete("/shopcarts/999999")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(resp.is_json)
