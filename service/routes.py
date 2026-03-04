@@ -43,25 +43,48 @@ def index():
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
 
+######################################################################
+# CREATE A NEW SHOPCART
+######################################################################
+@app.route("/Shopcart", methods=["POST"])
+def create_shopcart():
+    """
+    Creates an Shopcart
+    This endpoint will create an Shopcart based the data in the body that is posted
+    """
+    app.logger.info("Request to create a Shopcart")
+    check_content_type("application/json")
+
+    # Create the account
+    shopcart = Shopcart()
+    shopcart.deserialize(request.get_json())
+    shopcart.create()
+
+    # Create a message to return
+    message = shopcart.serialize()
+    location_url = url_for("get_shopcart", shopcart_id=shopcart.id, _external=True)
+
+    return jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
+
 
 ######################################################################
-# READ A SHOPCART
+#  U T I L I T Y   F U N C T I O N S
 ######################################################################
-@app.route("/shopcarts/<int:shopcart_id>", methods=["GET"])
-def get_shopcarts(shopcart_id):
-    """
-    Retrieve a single Shopcart
 
-    This endpoint will return a Shopcart based on its id
-    """
-    app.logger.info("Request to Retrieve a shopcart with id [%s]", shopcart_id)
 
-    shopcart = Shopcart.find(shopcart_id)
-    if not shopcart:
+def check_content_type(content_type):
+    """Checks that the media type is correct"""
+    if "Content-Type" not in request.headers:
+        app.logger.error("No Content-Type specified.")
         abort(
-            status.HTTP_404_NOT_FOUND,
-            f"Shopcart with id '{shopcart_id}' was not found.",
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            f"Content-Type must be {content_type}",
         )
 
-    app.logger.info("Returning shopcart: %s", shopcart.name)
-    return jsonify(shopcart.serialize()), status.HTTP_200_OK
+    if request.headers["Content-Type"] == content_type:
+        return
+
+    app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
+    abort(
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, f"Content-Type must be {content_type}"
+    )
