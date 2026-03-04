@@ -40,7 +40,22 @@ def index():
 
 
 ######################################################################
-#  R E S T   A P I   E N D P O I N T S
+# LIST ALL ACCOUNTS
 ######################################################################
+@app.route("/accounts", methods=["GET"])
+def list_accounts():
+    """Returns all of the Accounts"""
+    app.logger.info("Request for Account list")
+    accounts = []
 
-# Todo: Place your REST API code here ...
+    # Process the query string if any
+    name = request.args.get("name")
+    if name:
+        accounts = Account.find_by_name(name)
+    else:
+        accounts = Account.all()
+
+    # Return as an array of dictionaries
+    results = [account.serialize() for account in accounts]
+
+    return jsonify(results), status.HTTP_200_OK

@@ -81,3 +81,13 @@ class TestShopcart(TestCase):
         self.assertEqual(data.active, shopcart.active)
 
     # Todo: Add your test cases here...
+
+    def test_list_all_accounts(self):
+        """It should List all Accounts in the database"""
+        accounts = Account.all()
+        self.assertEqual(accounts, [])
+        for account in AccountFactory.create_batch(5):
+            account.create()
+        # Assert that there are not 5 accounts in the database
+        accounts = Account.all()
+        self.assertEqual(len(accounts), 5)
