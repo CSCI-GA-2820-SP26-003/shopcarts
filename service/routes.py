@@ -52,27 +52,6 @@ def list_shopcarts():
     app.logger.info("Request for Shopcart list")
     shopcarts = []
 
-# Todo: Place your REST API code here ...
-######################################################################
-# DELETE A SHOPCART
-######################################################################
-@app.route("/shopcarts/<int:shopcart_id>", methods=["DELETE"])
-def delete_shopcart(shopcart_id):
-    """Deletes a Shopcart"""
-    app.logger.info("Request to delete shopcart with id=%s", shopcart_id)
-
-    cart = Shopcart.find(shopcart_id)
-    if not cart:
-        return (
-            jsonify(
-                error="Not Found",
-                message=f"Shopcart with id '{shopcart_id}' was not found",
-            ),
-            status.HTTP_404_NOT_FOUND,
-        )
-
-    cart.delete()
-    return ("", status.HTTP_204_NO_CONTENT)
     # Process the query string if any
     name = request.args.get("name")
     if name:
@@ -138,7 +117,7 @@ def create_shopcart():
 @app.route("/shopcarts/<int:shopcart_id>/items", methods=["POST"])
 def create_items(shopcart_id):
     """
-    Create an Address on an Shopcart
+    Create an Item on an Shopcart
 
     This endpoint will add an item to an shopcart
     """
@@ -166,12 +145,34 @@ def create_items(shopcart_id):
 
     # Send the location to GET the new item
     location_url = url_for(
-        "get_items",
-        shopcart_id=shopcart.id,
-        item_id=item.id,
-        _external=True
+        "get_items", shopcart_id=shopcart.id, item_id=item.id, _external=True
     )
     return jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
+
+
+######################################################################
+# RETRIEVE AN ITEM FROM SHOPCART
+######################################################################
+@app.route("/shopcarts/<int:shopcart_id>/items/<int:item_id>", methods=["GET"])
+def get_items(shopcart_id, item_id):
+    """
+    Get an Item
+
+    This endpoint returns just an item
+    """
+    app.logger.info(
+        "Request to retrieve Item %s for Shopcart id: %s", (item_id, shopcart_id)
+    )
+
+    # See if the item exists and abort if it doesn't
+    item = Item.find(item_id)
+    if not item:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Shopcart with id '{item_id}' could not be found.",
+        )
+
+    return jsonify(item.serialize()), status.HTTP_200_OK
 
 
 ######################################################################
