@@ -109,12 +109,6 @@ class TestShopcartService(TestCase):
         self.assertEqual(new_shopcart["name"], shopcart.name, "Names does not match")
         self.assertEqual(new_shopcart["userid"], shopcart.userid, "UserID does not match")
         self.assertEqual(
-            new_shopcart["address"], shopcart.address, "Address does not match"
-        )
-        self.assertEqual(
-            new_shopcart["email"], shopcart.email, "Email does not match"
-            )
-        self.assertEqual(
             new_shopcart["active"], shopcart.active, "Active state does not match"
         )
 
@@ -124,12 +118,6 @@ class TestShopcartService(TestCase):
         new_shopcart = resp.get_json()
         self.assertEqual(new_shopcart["name"], shopcart.name, "Names does not match")
         self.assertEqual(new_shopcart["userid"], shopcart.userid, "UserID does not match")
-        self.assertEqual(
-            new_shopcart["address"], shopcart.address, "Address does not match"
-        )
-        self.assertEqual(
-            new_shopcart["email"], shopcart.email, "Email does not match"
-            )
         self.assertEqual(
             new_shopcart["active"], shopcart.active, "Active state does not match"
         )
@@ -146,8 +134,6 @@ class TestShopcartService(TestCase):
         self.assertEqual(data["id"], shopcart.id)
         self.assertEqual(data["name"], shopcart.name)
         self.assertEqual(data["userid"], shopcart.userid)
-        self.assertEqual(data["email"], shopcart.email)
-        self.assertEqual(data["address"], shopcart.address)
         self.assertEqual(data["active"], shopcart.active)
         self.assertEqual(data["items"], [])
         self.assertEqual(data["total_price"], 0)

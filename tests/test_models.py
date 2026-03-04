@@ -76,8 +76,6 @@ class TestShopcart(TestCase):
         self.assertEqual(len(found), 1)
         data = Shopcart.find(shopcart.id)
         self.assertEqual(data.name, shopcart.name)
-        self.assertEqual(data.address, shopcart.address)
-        self.assertEqual(data.email, shopcart.email)
         self.assertEqual(data.userid, shopcart.userid)
         self.assertEqual(data.active, shopcart.active)
 
@@ -119,8 +117,6 @@ class TestShopcart(TestCase):
         self.assertEqual(found.id, shopcart.id)
         self.assertEqual(found.name, shopcart.name)
         self.assertEqual(found.userid, shopcart.userid)
-        self.assertEqual(found.email, shopcart.email)
-        self.assertEqual(found.address, shopcart.address)
         self.assertEqual(found.active, shopcart.active)
 
     def test_read_shopcart_not_found(self):

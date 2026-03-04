@@ -33,6 +33,4 @@ class ShopcartFactory(factory.Factory):
     id = factory.Sequence(lambda n: n)
     name = factory.Faker("first_name")
     userid = factory.Faker("user_name")
-    email = factory.Faker("email")
-    address = factory.Faker("address")
     active = factory.Faker("pybool")
