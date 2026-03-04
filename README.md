@@ -1,63 +1,226 @@
-# NYU DevOps Project Template
+# Shopcarts Service
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Language-Python-blue.svg)](https://python.org/)
 
-This is a skeleton you can use to start your projects.
-
-**Note:** _Feel free to overwrite this `README.md` file with the one that describes your project._
-
 ## Overview
 
-This project template contains starter code for your class project. The `/service` folder contains your `models.py` file for your model and a `routes.py` file for your service. The `/tests` folder has test case starter code for testing the model and the service separately. All you need to do is add your functionality. You can use the [lab-flask-tdd](https://github.com/nyu-devops/lab-flask-tdd) for code examples to copy from.
+The Shopcarts service allows customers to manage a collection of products they want to purchase. Each shopcart is associated with a customer via their customer ID and can contain multiple items. Each item references a product ID, name, quantity, and price at the time it was added.
 
-## Automatic Setup
+## Running the Service
 
-The best way to use this repo is to start your own repo using it as a git template. To do this just press the green **Use this template** button in GitHub and this will become the source for your repository.
-
-## Manual Setup
-
-You can also clone this repository and then copy and paste the starter code into your project repo folder on your local computer. Be careful not to copy over your own `README.md` file so be selective in what you copy.
-
-There are 4 hidden files that you will need to copy manually if you use the Mac Finder or Windows Explorer to copy files from this folder into your repo folder.
-
-These should be copied using a bash shell as follows:
-
+**Install dependencies:**
 ```bash
-    cp .gitignore  ../<your_repo_folder>/
-    cp .flaskenv ../<your_repo_folder>/
-    cp .gitattributes ../<your_repo_folder>/
+make install
 ```
 
-## Contents
+**Start the service** (runs on `http://localhost:8080`):
+```bash
+make run
+```
 
-The project contains the following:
+## Running Tests
 
-```text
-.gitignore          - this will ignore vagrant and other metadata files
-.flaskenv           - Environment variables to configure Flask
-.gitattributes      - File to gix Windows CRLF issues
-.devcontainers/     - Folder with support for VSCode Remote Containers
-dot-env-example     - copy to .env to use environment variables
-pyproject.toml      - Poetry list of Python libraries required by your code
+```bash
+make test
+```
 
-service/                   - service python package
-├── __init__.py            - package initializer
-├── config.py              - configuration parameters
-├── models.py              - module with business models
-├── routes.py              - module with service routes
-└── common                 - common code package
-    ├── cli_commands.py    - Flask command to recreate all tables
-    ├── error_handlers.py  - HTTP error handling code
-    ├── log_handlers.py    - logging setup code
+Tests require 95% minimum code coverage. To also run linting:
+```bash
+make lint
+```
+
+## Data Models
+
+### Shopcart
+| Field    | Type    | Required | Description                      |
+|----------|---------|----------|----------------------------------|
+| id       | Integer | auto     | Primary key                      |
+| name     | String  | yes      | Shopcart name                    |
+| userid   | String  | no       | Customer ID (associates cart to customer) |
+| active   | Boolean | no       | Whether the cart is active (default: true) |
+| items    | List    | auto     | Collection of items in the cart  |
+
+### Item
+| Field       | Type    | Required | Description                   |
+|-------------|---------|----------|-------------------------------|
+| id          | Integer | auto     | Primary key                   |
+| shopcart_id | Integer | auto     | Foreign key to parent shopcart |
+| product_id  | String  | yes      | Product identifier            |
+| name        | String  | yes      | Product name                  |
+| quantity    | Integer | no       | Quantity to purchase (default: 1) |
+| price       | Float   | yes      | Price at time of adding to cart |
+
+## API Reference
+
+### Service Info
+
+#### GET /
+
+Returns service metadata.
+
+```
+Response 200:
+{
+  "name": "Shopcart REST API Service",
+  "version": "1.0",
+  "paths": "..."
+}
+```
+
+---
+
+### Shopcarts
+
+#### GET /shopcarts
+
+List all shopcarts. Optionally filter by name using `?name=<name>`.
+
+```
+Response 200: [ { shopcart objects... } ]
+```
+
+#### POST /shopcarts
+
+Create a new shopcart.
+
+```
+Content-Type: application/json
+
+Body:
+{
+  "name": "My Cart",
+  "userid": "customer-123",
+  "active": true
+}
+
+Response 201: { created shopcart }
+Header: Location: /shopcarts/<id>
+```
+
+#### GET /shopcarts/\<shopcart_id\>
+
+Retrieve a shopcart by ID, including its items.
+
+```
+Response 200: { shopcart with items }
+Response 404: shopcart not found
+```
+
+#### PUT /shopcarts/\<shopcart_id\>
+
+Update an existing shopcart.
+
+```
+Content-Type: application/json
+
+Body:
+{
+  "name": "Updated Name",
+  "userid": "customer-123",
+  "active": false
+}
+
+Response 200: { updated shopcart }
+Response 404: shopcart not found
+```
+
+#### DELETE /shopcarts/\<shopcart_id\>
+
+Delete a shopcart and all its items.
+
+```
+Response 204: (no content)
+Response 404: shopcart not found
+```
+
+---
+
+### Items (subordinate resource)
+
+#### GET /shopcarts/\<shopcart_id\>/items
+
+List all items in a shopcart.
+
+```
+Response 200: [ { item objects... } ]
+Response 404: shopcart not found
+```
+
+#### POST /shopcarts/\<shopcart_id\>/items
+
+Add an item to a shopcart.
+
+```
+Content-Type: application/json
+
+Body:
+{
+  "product_id": "prod-456",
+  "name": "Wireless Mouse",
+  "quantity": 2,
+  "price": 29.99
+}
+
+Response 201: { created item }
+Header: Location: /shopcarts/<shopcart_id>/items/<item_id>
+Response 404: shopcart not found
+```
+
+#### GET /shopcarts/\<shopcart_id\>/items/\<item_id\>
+
+Retrieve a specific item from a shopcart.
+
+```
+Response 200: { item object }
+Response 404: shopcart or item not found
+```
+
+#### PUT /shopcarts/\<shopcart_id\>/items/\<item_id\>
+
+Update an item in a shopcart.
+
+```
+Content-Type: application/json
+
+Body:
+{
+  "product_id": "prod-456",
+  "name": "Wireless Mouse",
+  "quantity": 3,
+  "price": 29.99
+}
+
+Response 200: { updated item }
+Response 404: shopcart or item not found
+```
+
+#### DELETE /shopcarts/\<shopcart_id\>/items/\<item_id\>
+
+Remove an item from a shopcart.
+
+```
+Response 204: (no content)
+Response 404: shopcart or item not found
+```
+
+---
+
+## Project Structure
+
+```
+service/
+├── models.py       - Shopcart and Item models (SQLAlchemy)
+├── routes.py       - REST API route handlers
+└── common/
+    ├── error_handlers.py  - HTTP error responses
+    ├── log_handlers.py    - Logging setup
     └── status.py          - HTTP status constants
 
-tests/                     - test cases package
-├── __init__.py            - package initializer
-├── factories.py           - Factory for testing with fake objects
-├── test_cli_commands.py   - test suite for the CLI
-├── test_models.py         - test suite for business models
-└── test_routes.py         - test suite for service routes
+tests/
+├── factories.py        - Factory Boy factories for test data
+├── test_models.py      - Model unit tests
+└── test_routes.py      - API route tests
 ```
 
 ## License
@@ -66,4 +229,4 @@ Copyright (c) 2016, 2025 [John Rofrano](https://www.linkedin.com/in/JohnRofrano/
 
 Licensed under the Apache License. See [LICENSE](LICENSE)
 
-This repository is part of the New York University (NYU) masters class: **CSCI-GA.2820-001 DevOps and Agile Methodologies** created and taught by [John Rofrano](https://cs.nyu.edu/~rofrano/), Adjunct Instructor, NYU Courant Institute, Graduate Division, Computer Science, and NYU Stern School of Business.
+This repository is part of the NYU masters class: **CSCI-GA.2820-001 DevOps and Agile Methodologies**.
