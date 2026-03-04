@@ -76,10 +76,10 @@ class TestShopcart(TestCase):
         self.assertEqual(len(found), 1)
         data = Shopcart.find(shopcart.id)
         self.assertEqual(data.name, shopcart.name)
-        self.assertEqual(data.address, shopcart.address)
-        self.assertEqual(data.email, shopcart.email)
         self.assertEqual(data.userid, shopcart.userid)
         self.assertEqual(data.active, shopcart.active)
+        self.assertEqual(data.items, shopcart.items)
+        self.assertEqual(data.total_price, shopcart.total_price)
 
     def test_add_a_shopcart(self):
         """It should Create an shopcart and add it to the database"""

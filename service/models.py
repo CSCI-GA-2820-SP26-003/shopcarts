@@ -137,12 +137,11 @@ class Shopcart(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(63))
     userid = db.Column(db.String(73))
-    email = db.Column(db.String(83))
-    address = db.Column(db.String(93))
     active = db.Column(db.Boolean, default=True)
     items = db.relationship(
         "Item", backref="shopcart", lazy=True, cascade="all, delete-orphan"
     )
+    total_price = db.Column(db.Float, default=0.0)
 
     def __repr__(self):
         return f"<Shopcart {self.name} id=[{self.id}]>"
@@ -195,8 +194,6 @@ class Shopcart(db.Model):
             "id": self.id,
             "name": self.name,
             "userid": self.userid,
-            "email": self.email,
-            "address": self.address,
             "active": self.active,
             "items": [item.serialize() for item in self.items],
             "total_price": self.total_price,
@@ -212,8 +209,6 @@ class Shopcart(db.Model):
         try:
             self.name = data["name"]
             self.userid = data.get("userid")
-            self.email = data.get("email")
-            self.address = data.get("address")
             self.active = data.get("active", True)
         except AttributeError as error:
             raise DataValidationError("Invalid attribute: " + error.args[0]) from error
