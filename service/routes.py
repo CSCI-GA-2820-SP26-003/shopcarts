@@ -55,6 +55,27 @@ def list_shopcarts():
     return jsonify(results), status.HTTP_200_OK
 
 
+######################################################################
+# LIST ALL ITEMS IN A SHOPCART
+######################################################################
+@app.route("/shopcarts/<int:shopcart_id>/items", methods=["GET"])
+def list_items(shopcart_id):
+    """Returns all of the items for an Shopcart"""
+    app.logger.info("Request for all items for Shopcart with id: %s", shopcart_id)
+
+    # See if the shopcart exists and abort if it doesn't
+    shopcart = Shopcart.find(shopcart_id)
+    if not shopcart:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Shopcart with id '{shopcart_id}' could not be found.",
+        )
+
+    # Get the items for the shopcart
+    results = [item.serialize() for item in shopcart.items]
+
+    return jsonify(results), status.HTTP_200_OK
+
 
 ######################################################################
 # READ A SHOPCART
