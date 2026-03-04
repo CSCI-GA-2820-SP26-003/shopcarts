@@ -79,6 +79,20 @@ class TestShopcart(TestCase):
         self.assertEqual(data.userid, shopcart.userid)
         self.assertEqual(data.active, shopcart.active)
 
+    # Todo: Add your test cases here...
+
+    def test_list_all_shopcarts(self):
+        """It should List all Shopcarts in the database"""
+        shopcarts = Shopcart.all()
+        self.assertEqual(shopcarts, [])
+        for shopcart in ShopcartFactory.create_batch(5):
+            shopcart.create()
+        # Assert that there are not 5 shopcarts in the database
+        shopcarts = Shopcart.all()
+        self.assertEqual(len(shopcarts), 5)
+
+    
+
     def test_add_a_shopcart(self):
         """It should Create an shopcart and add it to the database"""
         shopcarts = Shopcart.all()

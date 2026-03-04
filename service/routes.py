@@ -50,7 +50,10 @@ def index():
 def list_shopcarts():
     """Returns all of the Shopcarts"""
     app.logger.info("Request for Shopcart list")
-    shopcarts = []
+    shopcarts = Shopcart.all()
+    results = [shopcart.serialize() for shopcart in shopcarts]
+    return jsonify(results), status.HTTP_200_OK
+
 
 
 ######################################################################
