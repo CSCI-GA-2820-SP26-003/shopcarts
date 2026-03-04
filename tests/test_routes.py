@@ -31,6 +31,8 @@ DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
 
+BASE_URL = "/shopcarts"
+
 
 ######################################################################
 #  T E S T   C A S E S
@@ -64,6 +66,26 @@ class TestYourResourceService(TestCase):
     def tearDown(self):
         """This runs after each test"""
         db.session.remove()
+
+    ######################################################################
+    #  H E L P E R   M E T H O D S
+    ######################################################################
+
+    def _create_shopcarts(self, count):
+        """Factory method to create shopcarts in bulk"""
+        shopcarts = []
+        for _ in range(count):
+            shopcart = ShopcartFactory()
+            resp = self.client.post(BASE_URL, json=shopcart.serialize())
+            self.assertEqual(
+                resp.status_code,
+                status.HTTP_201_CREATED,
+                "Could not create test Shopcart",
+            )
+            new_shopcart = resp.get_json()
+            shopcart.id = new_shopcart["id"]
+            shopcarts.append(shopcart)
+        return shopcarts
 
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
@@ -118,3 +140,32 @@ class TestYourResourceService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
         data = resp.get_json()
         self.assertIn("0", data["message"])
+
+    def test_add_item(self):
+        """It should Add an address to an account"""
+        shopcart = self._create_shopcarts(1)[0]
+        item = ItemFactory()
+        resp = self.client.post(
+            f"{BASE_URL}/{shopcart.id}/items",
+            json=item.serialize(),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Make sure location header is set
+        location = resp.headers.get("Location", None)
+        self.assertIsNotNone(location)
+
+        data = resp.get_json()
+        logging.debug(data)
+        self.assertEqual(data["shopcart_id"], shopcart.id)
+        self.assertEqual(data["product_id"], item.product_id)
+        self.assertEqual(data["name"], item.name)
+        self.assertEqual(data["quantity"], item.quantity)
+        self.assertAlmostEqual(data["price"], item.price, places=2)
+
+        # Check that the location header was correct by getting it
+        resp = self.client.get(location, content_type="application/json")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        new_item = resp.get_json()
+        self.assertEqual(new_item["name"], item.name, "Item name does not match")
