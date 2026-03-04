@@ -109,13 +109,7 @@ class TestShopcartService(TestCase):
         # Check the data is correct
         new_shopcart = resp.get_json()
         self.assertEqual(new_shopcart["name"], shopcart.name, "Names does not match")
-        self.assertEqual(new_shopcart["userid"], shopcart.name, "UserID does not match")
-        self.assertEqual(
-            new_shopcart["address"], shopcart.address, "Address does not match"
-        )
-        self.assertEqual(
-            new_shopcart["email"], shopcart.email, "Email does not match"
-            )
+        self.assertEqual(new_shopcart["userid"], shopcart.userid, "UserID does not match")
         self.assertEqual(
             new_shopcart["active"], shopcart.active, "Active state does not match"
         )
@@ -125,15 +119,45 @@ class TestShopcartService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         new_shopcart = resp.get_json()
         self.assertEqual(new_shopcart["name"], shopcart.name, "Names does not match")
-        self.assertEqual(new_shopcart["userid"], shopcart.name, "UserID does not match")
-        self.assertEqual(
-            new_shopcart["address"], shopcart.address, "Address does not match"
-        )
-        self.assertEqual(
-            new_shopcart["email"], shopcart.email, "Email does not match"
-            )
+        self.assertEqual(new_shopcart["userid"], shopcart.userid, "UserID does not match")
         self.assertEqual(
             new_shopcart["active"], shopcart.active, "Active state does not match"
+        )
+        
+    def test_get_shopcart(self):
+        """It should return a single Shopcart"""
+        shopcart = ShopcartFactory()
+        shopcart.create()
+
+        resp = self.client.get(f"/shopcarts/{shopcart.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(data["id"], shopcart.id)
+        self.assertEqual(data["name"], shopcart.name)
+        self.assertEqual(data["userid"], shopcart.userid)
+        self.assertEqual(data["active"], shopcart.active)
+        self.assertEqual(data["items"], [])
+        self.assertEqual(data["total_price"], 0)
+
+    def test_get_shopcart_with_items(self):
+        """It should return a Shopcart with its items and total_price"""
+        shopcart = ShopcartFactory()
+        shopcart.create()
+
+        item = ItemFactory(shopcart_id=shopcart.id)
+        item.create()
+
+        resp = self.client.get(f"/shopcarts/{shopcart.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data["items"]), 1)
+        self.assertEqual(data["items"][0]["product_id"], item.product_id)
+        self.assertEqual(data["items"][0]["quantity"], item.quantity)
+        self.assertAlmostEqual(data["items"][0]["price"], item.price, places=2)
+        self.assertAlmostEqual(
+            data["total_price"], item.price * item.quantity, places=2
         )
 
     def test_get_shopcart_not_found(self):
@@ -189,3 +213,21 @@ class TestShopcartService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         new_item = resp.get_json()
         self.assertEqual(new_item["name"], item.name, "Item name does not match")
+
+    ######################################################################
+    # DELETE A SHOPCART
+    ######################################################################
+    def test_delete_shopcart_success(self):
+        """It should Delete an existing Shopcart"""
+        cart = ShopcartFactory()
+        cart.create()
+        cart_id = cart.id
+
+        resp = self.client.delete(f"/shopcarts/{cart_id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_shopcart_not_found(self):
+        """It should not Delete a Shopcart that does not exist"""
+        resp = self.client.delete("/shopcarts/999999")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(resp.is_json)

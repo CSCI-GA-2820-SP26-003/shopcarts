@@ -85,10 +85,33 @@ def delete_shopcart(shopcart_id):
 
     return jsonify(results), status.HTTP_200_OK
 
+
+######################################################################
+# DELETE A SHOPCART
+######################################################################
+@app.route("/shopcarts/<int:shopcart_id>", methods=["DELETE"])
+def delete_shopcart(shopcart_id):
+    """Deletes a Shopcart"""
+    app.logger.info("Request to delete shopcart with id=%s", shopcart_id)
+
+    cart = Shopcart.find(shopcart_id)
+    if not cart:
+        return (
+            jsonify(
+                error="Not Found",
+                message=f"Shopcart with id '{shopcart_id}' was not found",
+            ),
+            status.HTTP_404_NOT_FOUND,
+        )
+
+    cart.delete()
+    return ("", status.HTTP_204_NO_CONTENT)
+
+
 ######################################################################
 # CREATE A NEW SHOPCART
 ######################################################################
-@app.route("/Shopcart", methods=["POST"])
+@app.route("/shopcarts", methods=["POST"])
 def create_shopcart():
     """
     Creates an Shopcart
@@ -97,57 +120,87 @@ def create_shopcart():
     app.logger.info("Request to create a Shopcart")
     check_content_type("application/json")
 
-    # Create the account
+    # Create the shopcart
     shopcart = Shopcart()
     shopcart.deserialize(request.get_json())
     shopcart.create()
 
     # Create a message to return
     message = shopcart.serialize()
-    location_url = url_for("get_shopcart", shopcart_id=shopcart.id, _external=True)
+    location_url = url_for("get_shopcarts", shopcart_id=shopcart.id, _external=True)
 
     return jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
+
+
+######################################################################
+# CREATE A NEW ITEM
+######################################################################
+@app.route("/shopcarts/<int:shopcart_id>/items", methods=["POST"])
+def create_items(shopcart_id):
+    """
+    Create an Address on an Shopcart
+
+    This endpoint will add an item to an shopcart
+    """
+    app.logger.info("Request to create an Item for Shopcart with id: %s", shopcart_id)
+    check_content_type("application/json")
+
+    # See if the shopcart exists and abort if it doesn't
+    shopcart = Shopcart.find(shopcart_id)
+    if not shopcart:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Shopcart with id '{shopcart_id}' could not be found.",
+        )
+
+    # Create an item from the json data
+    item = Item()
+    item.deserialize(request.get_json())
+
+    # Append the item to the shopcart
+    shopcart.items.append(item)
+    shopcart.update()
+
+    # Prepare a message to return
+    message = item.serialize()
+
+    # Send the location to GET the new item
+    location_url = url_for(
+        "get_items",
+        shopcart_id=shopcart.id,
+        item_id=item.id,
+        _external=True
+    )
+    return jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
+
+
+######################################################################
+# READ A SHOPCART
+######################################################################
+@app.route("/shopcarts/<int:shopcart_id>", methods=["GET"])
+def get_shopcarts(shopcart_id):
+    """
+    Retrieve a single Shopcart
+
+    This endpoint will return a Shopcart based on its id
+    """
+    app.logger.info("Request to Retrieve a shopcart with id [%s]", shopcart_id)
+
+    shopcart = Shopcart.find(shopcart_id)
+    if not shopcart:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Shopcart with id '{shopcart_id}' was not found.",
+        )
+
+    app.logger.info("Returning shopcart: %s", shopcart.name)
+    return jsonify(shopcart.serialize()), status.HTTP_200_OK
 
 
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
 
-
-def check_content_type(content_type):
-    """Checks that the media type is correct"""
-    if "Content-Type" not in request.headers:
-        app.logger.error("No Content-Type specified.")
-        abort(
-            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            f"Content-Type must be {content_type}",
-        )
-
-    app.logger.info("Returning shopcart: %s", shopcart.name)
-    return jsonify(shopcart.serialize()), status.HTTP_200_OK
-
-######################################################################
-# CREATE A NEW ACCOUNT
-######################################################################
-@app.route("/shopcarts/<int:shopcart_id>/items", methods=["POST"])
-def create_item():
-    """
-    Creates an Item
-    This endpoint will create an Item based the data in the body that is posted
-    """
-    app.logger.info("Request to create an Item")
-    check_content_type("application/json")
-
-    # Create the account
-    item = Item()
-    item.deserialize(request.get_json())
-    item.create()
-
-    # Create a message to return
-    message = item.serialize()
-    location_url = url_for("get_accounts", account_id=item.id, _external=True)
-
-    return jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
 
 def check_content_type(content_type):
     """Checks that the media type is correct"""
