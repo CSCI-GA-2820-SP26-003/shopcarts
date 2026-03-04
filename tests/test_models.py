@@ -15,16 +15,17 @@
 ######################################################################
 
 """
-Test cases for Pet Model
+Test cases for Shopcart Model
 """
 
 # pylint: disable=duplicate-code
 import os
 import logging
+from unittest.mock import patch
 from unittest import TestCase
 from wsgi import app
-from service.models import Shopcart, DataValidationError, db
-from .factories import ShopcartFactory
+from service.models import Shopcart, Item, DataValidationError, db
+from .factories import ShopcartFactory, ItemFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -54,6 +55,7 @@ class TestShopcart(TestCase):
 
     def setUp(self):
         """This runs before each test"""
+        db.session.query(Item).delete()
         db.session.query(Shopcart).delete()  # clean up the last tests
         db.session.commit()
 
@@ -67,7 +69,6 @@ class TestShopcart(TestCase):
 
     def test_create_shopcart(self):
         """It should create a Shopcart"""
-        
         shopcart = ShopcartFactory()
         shopcart.create()
         self.assertIsNotNone(shopcart.id)
@@ -81,3 +82,30 @@ class TestShopcart(TestCase):
         self.assertEqual(data.active, shopcart.active)
 
     # Todo: Add your test cases here...
+
+    def test_list_all_shopcarts(self):
+        """It should List all Shopcarts in the database"""
+        shopcarts = Shopcart.all()
+        self.assertEqual(shopcarts, [])
+        for shopcart in ShopcartFactory.create_batch(5):
+            shopcart.create()
+        # Assert that there are not 5 shopcarts in the database
+        shopcarts = Shopcart.all()
+        self.assertEqual(len(shopcarts), 5)
+    def test_add_a_shopcart(self):
+        """It should Create an shopcart and add it to the database"""
+        shopcarts = Shopcart.all()
+        self.assertEqual(shopcarts, [])
+        shopcart = ShopcartFactory()
+        shopcart.create()
+        # Assert that it was assigned an id and shows up in the database
+        self.assertIsNotNone(shopcart.id)
+        shopcarts = Shopcart.all()
+        self.assertEqual(len(shopcarts), 1)
+
+    @patch("service.models.db.session.commit")
+    def test_add_shopcart_failed(self, exception_mock):
+        """It should not create an Shopcart on database error"""
+        exception_mock.side_effect = Exception()
+        shopcart = ShopcartFactory()
+        self.assertRaises(DataValidationError, shopcart.create)
