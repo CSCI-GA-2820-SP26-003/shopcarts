@@ -40,22 +40,22 @@ def index():
 
 
 ######################################################################
-# LIST ALL ACCOUNTS
+# LIST ALL SHOPCARTS
 ######################################################################
-@app.route("/accounts", methods=["GET"])
-def list_accounts():
-    """Returns all of the Accounts"""
-    app.logger.info("Request for Account list")
-    accounts = []
+@app.route("/shopcarts", methods=["GET"])
+def list_shopcarts():
+    """Returns all of the Shopcarts"""
+    app.logger.info("Request for Shopcart list")
+    shopcarts = []
 
     # Process the query string if any
     name = request.args.get("name")
     if name:
-        accounts = Account.find_by_name(name)
+        shopcarts = Shopcart.find_by_name(name)
     else:
-        accounts = Account.all()
+        shopcarts = Shopcart.all()
 
     # Return as an array of dictionaries
-    results = [account.serialize() for account in accounts]
+    results = [shopcart.serialize() for shopcart in shopcarts]
 
     return jsonify(results), status.HTTP_200_OK
