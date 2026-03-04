@@ -52,6 +52,27 @@ def list_shopcarts():
     app.logger.info("Request for Shopcart list")
     shopcarts = []
 
+# Todo: Place your REST API code here ...
+######################################################################
+# DELETE A SHOPCART
+######################################################################
+@app.route("/shopcarts/<int:shopcart_id>", methods=["DELETE"])
+def delete_shopcart(shopcart_id):
+    """Deletes a Shopcart"""
+    app.logger.info("Request to delete shopcart with id=%s", shopcart_id)
+
+    cart = Shopcart.find(shopcart_id)
+    if not cart:
+        return (
+            jsonify(
+                error="Not Found",
+                message=f"Shopcart with id '{shopcart_id}' was not found",
+            ),
+            status.HTTP_404_NOT_FOUND,
+        )
+
+    cart.delete()
+    return ("", status.HTTP_204_NO_CONTENT)
     # Process the query string if any
     name = request.args.get("name")
     if name:
