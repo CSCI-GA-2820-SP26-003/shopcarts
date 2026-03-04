@@ -15,7 +15,7 @@
 ######################################################################
 
 """
-Test cases for Pet Model
+Test cases for Shopcart Model
 """
 
 # pylint: disable=duplicate-code
@@ -24,8 +24,8 @@ import logging
 from unittest.mock import patch
 from unittest import TestCase
 from wsgi import app
-from service.models import Shopcart, DataValidationError, db
-from .factories import ShopcartFactory
+from service.models import Shopcart, Item, DataValidationError, db
+from .factories import ShopcartFactory, ItemFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -55,6 +55,7 @@ class TestShopcart(TestCase):
 
     def setUp(self):
         """This runs before each test"""
+        db.session.query(Item).delete()
         db.session.query(Shopcart).delete()  # clean up the last tests
         db.session.commit()
 
@@ -68,7 +69,6 @@ class TestShopcart(TestCase):
 
     def test_create_shopcart(self):
         """It should create a Shopcart"""
-        
         shopcart = ShopcartFactory()
         shopcart.create()
         self.assertIsNotNone(shopcart.id)
