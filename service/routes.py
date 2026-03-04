@@ -267,29 +267,42 @@ def update_items(shopcart_id, item_id):
 
     return jsonify(item.serialize()), status.HTTP_200_OK
 
-######################################################################
-# READ A SHOPCART
-######################################################################
-@app.route("/shopcarts/<int:shopcart_id>", methods=["GET"])
-def get_shopcarts(shopcart_id):
-    """
-    Retrieve a single Shopcart
 
-    This endpoint will return a Shopcart based on its id
-    """
-    app.logger.info("Request to Retrieve a shopcart with id [%s]", shopcart_id)
 
+######################################################################
+# DELETE AN ITEM
+######################################################################
+@app.route("/shopcarts/<int:shopcart_id>/items/<int:item_id>", methods=["DELETE"])
+def delete_items(shopcart_id, item_id):
+    """Deletes an Item from a Shopcart"""
+    app.logger.info(
+        "Request to delete Item %s for Shopcart id: %s", item_id, shopcart_id
+    )
+
+    # See if the shopcart exists and abort if it doesn't
     shopcart = Shopcart.find(shopcart_id)
     if not shopcart:
-        abort(
+        return (
+            jsonify(
+                error="Not Found",
+                message=f"Shopcart with id '{shopcart_id}' was not found",
+            ),
             status.HTTP_404_NOT_FOUND,
-            f"Shopcart with id '{shopcart_id}' was not found.",
         )
 
-    app.logger.info("Returning shopcart: %s", shopcart.name)
-    return jsonify(shopcart.serialize()), status.HTTP_200_OK
+    # See if the item exists and belongs to this shopcart
+    item = Item.find(item_id)
+    if (not item) or (item.shopcart_id != shopcart_id):
+        return (
+            jsonify(
+                error="Not Found",
+                message=f"Item with id '{item_id}' was not found in shopcart '{shopcart_id}'",
+            ),
+            status.HTTP_404_NOT_FOUND,
+        )
 
-
+    item.delete()
+    return ("", status.HTTP_204_NO_CONTENT)
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################

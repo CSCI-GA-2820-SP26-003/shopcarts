@@ -294,7 +294,39 @@ class TestShopcartService(TestCase):
         self.assertEqual(data["id"], item_id)
         self.assertEqual(data["shopcart_id"], shopcart.id)
         self.assertEqual(data["name"], "XXXX")
+    ######################################################################
+    # DELETE A SHOPCART ITEM
+    ######################################################################
+    def test_delete_shopcart_item_success(self):
+        """It should Delete an existing Shopcart Item"""
+        shopcart = self._create_shopcarts(1)[0]
 
+        item = ItemFactory()
+        resp = self.client.post(
+            f"{BASE_URL}/{shopcart.id}/items",
+            json=item.serialize(),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        item_id = resp.get_json()["id"]
+
+        resp = self.client.delete(f"{BASE_URL}/{shopcart.id}/items/{item_id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_shopcart_item_not_found(self):
+        """It should return 404 if item does not exist"""
+        shopcart = self._create_shopcarts(1)[0]
+
+        resp = self.client.delete(f"{BASE_URL}/{shopcart.id}/items/999999")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(resp.is_json)
+
+    def test_delete_shopcart_item_cart_not_found(self):
+        """It should return 404 if shopcart does not exist"""
+        resp = self.client.delete(f"{BASE_URL}/999999/items/1")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(resp.is_json)
     ######################################################################
     # DELETE A SHOPCART
     ######################################################################
