@@ -79,17 +79,6 @@ class TestShopcart(TestCase):
         self.assertEqual(data.userid, shopcart.userid)
         self.assertEqual(data.active, shopcart.active)
 
-    # Todo: Add your test cases here...
-
-    def test_list_all_shopcarts(self):
-        """It should List all Shopcarts in the database"""
-        shopcarts = Shopcart.all()
-        self.assertEqual(shopcarts, [])
-        for shopcart in ShopcartFactory.create_batch(5):
-            shopcart.create()
-        # Assert that there are not 5 shopcarts in the database
-        shopcarts = Shopcart.all()
-        self.assertEqual(len(shopcarts), 5)
     def test_add_a_shopcart(self):
         """It should Create an shopcart and add it to the database"""
         shopcarts = Shopcart.all()
@@ -118,6 +107,62 @@ class TestShopcart(TestCase):
         self.assertEqual(found.name, shopcart.name)
         self.assertEqual(found.userid, shopcart.userid)
         self.assertEqual(found.active, shopcart.active)
+
+    def test_update_shopcart(self):
+        """It should Update an shopcart"""
+        shopcart = ShopcartFactory(userid="johndoe")
+        shopcart.create()
+        # Assert that it was assigned an id and shows up in the database
+        self.assertIsNotNone(shopcart.id)
+        self.assertEqual(shopcart.userid, "johndoe")
+
+        # Fetch it back
+        shopcart = Shopcart.find(shopcart.id)
+        shopcart.userid = "janedoe"
+        shopcart.update()
+
+        # Fetch it back again
+        shopcart = Shopcart.find(shopcart.id)
+        self.assertEqual(shopcart.userid, "janedoe")
+
+    @patch("service.models.db.session.commit")
+    def test_update_shopcart_failed(self, exception_mock):
+        """It should not update an Shopcart on database error"""
+        exception_mock.side_effect = Exception()
+        shopcart = ShopcartFactory()
+        self.assertRaises(DataValidationError, shopcart.update)
+
+    def test_delete_a_shopcart(self):
+        """It should Delete an shopcart from the database"""
+        shopcarts = Shopcart.all()
+        self.assertEqual(shopcarts, [])
+        shopcart = ShopcartFactory()
+        shopcart.create()
+        # Assert that it was assigned an id and shows up in the database
+        self.assertIsNotNone(shopcart.id)
+        shopcarts = Shopcart.all()
+        self.assertEqual(len(shopcarts), 1)
+        shopcart = shopcarts[0]
+        shopcart.delete()
+        shopcarts = Shopcart.all()
+        self.assertEqual(len(shopcarts), 0)
+
+    @patch("service.models.db.session.commit")
+    def test_delete_shopcart_failed(self, exception_mock):
+        """It should not delete an Shopcart on database error"""
+        exception_mock.side_effect = Exception()
+        shopcart = ShopcartFactory()
+        self.assertRaises(DataValidationError, shopcart.delete)
+
+    def test_list_all_shopcarts(self):
+        """It should List all Shopcarts in the database"""
+        shopcarts = Shopcart.all()
+        self.assertEqual(shopcarts, [])
+        for shopcart in ShopcartFactory.create_batch(5):
+            shopcart.create()
+        # Assert that there are not 5 shopcarts in the database
+        shopcarts = Shopcart.all()
+        self.assertEqual(len(shopcarts), 5)
 
     def test_read_shopcart_not_found(self):
         """It should return None when Shopcart is not found"""
