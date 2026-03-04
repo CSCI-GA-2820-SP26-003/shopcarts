@@ -44,8 +44,25 @@ def index():
 
 
 ######################################################################
-#  R E S T   A P I   E N D P O I N T S
+# LIST ALL SHOPCARTS
 ######################################################################
+@app.route("/shopcarts", methods=["GET"])
+def list_shopcarts():
+    """Returns all of the Shopcarts"""
+    app.logger.info("Request for Shopcart list")
+    shopcarts = []
+
+    # Process the query string if any
+    name = request.args.get("name")
+    if name:
+        shopcarts = Shopcart.find_by_name(name)
+    else:
+        shopcarts = Shopcart.all()
+
+    # Return as an array of dictionaries
+    results = [shopcart.serialize() for shopcart in shopcarts]
+
+    return jsonify(results), status.HTTP_200_OK
 
 ######################################################################
 # CREATE A NEW SHOPCART
