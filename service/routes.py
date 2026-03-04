@@ -156,7 +156,7 @@ def delete_shopcart(shopcart_id):
 @app.route("/shopcarts/<int:shopcart_id>/items", methods=["POST"])
 def create_items(shopcart_id):
     """
-    Create an Address on an Shopcart
+    Create an Item on an Shopcart
 
     This endpoint will add an item to an shopcart
     """
@@ -184,12 +184,86 @@ def create_items(shopcart_id):
 
     # Send the location to GET the new item
     location_url = url_for(
-        "get_items",
-        shopcart_id=shopcart.id,
-        item_id=item.id,
-        _external=True
+        "get_items", shopcart_id=shopcart.id, item_id=item.id, _external=True
     )
     return jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
+
+
+######################################################################
+# RETRIEVE AN ITEM FROM SHOPCART
+######################################################################
+@app.route("/shopcarts/<int:shopcart_id>/items/<int:item_id>", methods=["GET"])
+def get_items(shopcart_id, item_id):
+    """
+    Get an Item
+
+    This endpoint returns just an item
+    """
+    app.logger.info(
+        "Request to retrieve Item %s for Shopcart id: %s", (item_id, shopcart_id)
+    )
+
+    # See if the item exists and abort if it doesn't
+    item = Item.find(item_id)
+    if not item:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Shopcart with id '{item_id}' could not be found.",
+        )
+
+    return jsonify(item.serialize()), status.HTTP_200_OK
+
+######################################################################
+# UPDATE AN ITEM
+######################################################################
+@app.route("/shopcarts/<int:shopcart_id>/items/<int:item_id>", methods=["PUT"])
+def update_items(shopcart_id, item_id):
+    """
+    Update an Item
+
+    This endpoint will update an Item based the body that is posted
+    """
+    app.logger.info(
+        "Request to update Item %s for Shopcart id: %s", (item_id, shopcart_id)
+    )
+    check_content_type("application/json")
+
+    # See if the item exists and abort if it doesn't
+    item = Item.find(item_id)
+    if not item:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Shopcart with id '{item_id}' could not be found.",
+        )
+
+    # Update from the json in the body of the request
+    item.deserialize(request.get_json())
+    item.id = item_id
+    item.update()
+
+    return jsonify(item.serialize()), status.HTTP_200_OK
+
+######################################################################
+# READ A SHOPCART
+######################################################################
+@app.route("/shopcarts/<int:shopcart_id>", methods=["GET"])
+def get_shopcarts(shopcart_id):
+    """
+    Retrieve a single Shopcart
+
+    This endpoint will return a Shopcart based on its id
+    """
+    app.logger.info("Request to Retrieve a shopcart with id [%s]", shopcart_id)
+
+    shopcart = Shopcart.find(shopcart_id)
+    if not shopcart:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Shopcart with id '{shopcart_id}' was not found.",
+        )
+
+    app.logger.info("Returning shopcart: %s", shopcart.name)
+    return jsonify(shopcart.serialize()), status.HTTP_200_OK
 
 
 ######################################################################

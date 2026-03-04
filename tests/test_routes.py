@@ -23,10 +23,7 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
-from tests.factories import ShopcartFactory
 from service.common import status
-from service.models import db, Shopcart
-from tests.factories import ShopcartFactory
 from service.models import db, Shopcart, Item
 from .factories import ShopcartFactory, ItemFactory
 
@@ -168,7 +165,7 @@ class TestShopcartService(TestCase):
         self.assertIn("0", data["message"])
 
     def test_add_item(self):
-        """It should Add an address to an account"""
+        """It should Add an item to an shopcart"""
         shopcart = self._create_shopcarts(1)[0]
         item = ItemFactory()
         resp = self.client.post(
@@ -178,24 +175,6 @@ class TestShopcartService(TestCase):
         )
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
-    # Todo: Add your test cases here...
-    ######################################################################
-    # DELETE A SHOPCART
-    ######################################################################
-    def test_delete_shopcart_success(self):
-        """It should Delete an existing Shopcart"""
-        cart = ShopcartFactory()
-        cart.create()
-        cart_id = cart.id
-
-        resp = self.client.delete(f"/shopcarts/{cart_id}")
-        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
-
-    def test_delete_shopcart_not_found(self):
-        """It should not Delete a Shopcart that does not exist"""
-        resp = self.client.delete("/shopcarts/999999")
-        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertTrue(resp.is_json)
         # Make sure location header is set
         location = resp.headers.get("Location", None)
         self.assertIsNotNone(location)
@@ -213,6 +192,75 @@ class TestShopcartService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         new_item = resp.get_json()
         self.assertEqual(new_item["name"], item.name, "Item name does not match")
+
+    def test_get_item(self):
+        """It should Get an item from an shopcart"""
+        # create a known item
+        shopcart = self._create_shopcarts(1)[0]
+        item = ItemFactory()
+        resp = self.client.post(
+            f"{BASE_URL}/{shopcart.id}/items",
+            json=item.serialize(),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        data = resp.get_json()
+        logging.debug(data)
+        item_id = data["id"]
+
+        # retrieve it back
+        resp = self.client.get(
+            f"{BASE_URL}/{shopcart.id}/items/{item_id}",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        logging.debug(data)
+        self.assertEqual(data["shopcart_id"], shopcart.id)
+        self.assertEqual(data["product_id"], item.product_id)
+        self.assertEqual(data["name"], item.name)
+        self.assertEqual(data["quantity"], item.quantity)
+        self.assertAlmostEqual(data["price"], item.price, places=2)
+
+    def test_update_item(self):
+        """It should Update an item on an shopcart"""
+        # create a known item
+        shopcart = self._create_shopcarts(1)[0]
+        item = ItemFactory()
+        resp = self.client.post(
+            f"{BASE_URL}/{shopcart.id}/items",
+            json=item.serialize(),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        data = resp.get_json()
+        logging.debug(data)
+        item_id = data["id"]
+        data["name"] = "XXXX"
+
+        # send the update back
+        resp = self.client.put(
+            f"{BASE_URL}/{shopcart.id}/items/{item_id}",
+            json=data,
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # retrieve it back
+        resp = self.client.get(
+            f"{BASE_URL}/{shopcart.id}/items/{item_id}",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        logging.debug(data)
+        self.assertEqual(data["id"], item_id)
+        self.assertEqual(data["shopcart_id"], shopcart.id)
+        self.assertEqual(data["name"], "XXXX")
 
     ######################################################################
     # DELETE A SHOPCART
