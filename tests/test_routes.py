@@ -94,6 +94,39 @@ class TestShopcartService(TestCase):
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
 
+    def test_get_shopcart_list(self):
+        """It should Get a list of Shopcarts"""
+        self._create_shopcarts(5)
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 5)
+
+    def test_get_item_list(self):
+        """It should Get a list of items"""
+        # add two items to shopcart
+        shopcart = self._create_shopcarts(1)[0]
+        item_list = ItemFactory.create_batch(2)
+
+        # Create item 1
+        resp = self.client.post(
+            f"{BASE_URL}/{shopcart.id}/items", json=item_list[0].serialize()
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Create item 2
+        resp = self.client.post(
+            f"{BASE_URL}/{shopcart.id}/items", json=item_list[1].serialize()
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # get the list back and make sure there are 2
+        resp = self.client.get(f"{BASE_URL}/{shopcart.id}/items")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data), 2)
+
     def test_create_shopcart(self):
         """It should Create a new Shopcart"""
         shopcart = ShopcartFactory()
@@ -168,7 +201,7 @@ class TestShopcartService(TestCase):
         self.assertIn("0", data["message"])
 
     def test_add_item(self):
-        """It should Add an address to an account"""
+        """It should Add an item to an shopcart"""
         shopcart = self._create_shopcarts(1)[0]
         item = ItemFactory()
         resp = self.client.post(

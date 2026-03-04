@@ -50,38 +50,29 @@ def index():
 def list_shopcarts():
     """Returns all of the Shopcarts"""
     app.logger.info("Request for Shopcart list")
-    shopcarts = []
+    shopcarts = Shopcart.all()
+    results = [shopcart.serialize() for shopcart in shopcarts]
+    return jsonify(results), status.HTTP_200_OK
 
-# Todo: Place your REST API code here ...
-######################################################################
-# DELETE A SHOPCART
-######################################################################
-@app.route("/shopcarts/<int:shopcart_id>", methods=["DELETE"])
-def delete_shopcart(shopcart_id):
-    """Deletes a Shopcart"""
-    app.logger.info("Request to delete shopcart with id=%s", shopcart_id)
 
-    cart = Shopcart.find(shopcart_id)
-    if not cart:
-        return (
-            jsonify(
-                error="Not Found",
-                message=f"Shopcart with id '{shopcart_id}' was not found",
-            ),
+######################################################################
+# LIST ALL ITEMS IN A SHOPCART
+######################################################################
+@app.route("/shopcarts/<int:shopcart_id>/items", methods=["GET"])
+def list_items(shopcart_id):
+    """Returns all of the items for an Shopcart"""
+    app.logger.info("Request for all items for Shopcart with id: %s", shopcart_id)
+
+    # See if the shopcart exists and abort if it doesn't
+    shopcart = Shopcart.find(shopcart_id)
+    if not shopcart:
+        abort(
             status.HTTP_404_NOT_FOUND,
+            f"Shopcart with id '{shopcart_id}' could not be found.",
         )
 
-    cart.delete()
-    return ("", status.HTTP_204_NO_CONTENT)
-    # Process the query string if any
-    name = request.args.get("name")
-    if name:
-        shopcarts = Shopcart.find_by_name(name)
-    else:
-        shopcarts = Shopcart.all()
-
-    # Return as an array of dictionaries
-    results = [shopcart.serialize() for shopcart in shopcarts]
+    # Get the items for the shopcart
+    results = [item.serialize() for item in shopcart.items]
 
     return jsonify(results), status.HTTP_200_OK
 

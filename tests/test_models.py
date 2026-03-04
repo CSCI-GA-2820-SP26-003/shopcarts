@@ -90,6 +90,9 @@ class TestShopcart(TestCase):
         # Assert that there are not 5 shopcarts in the database
         shopcarts = Shopcart.all()
         self.assertEqual(len(shopcarts), 5)
+
+    
+
     def test_add_a_shopcart(self):
         """It should Create an shopcart and add it to the database"""
         shopcarts = Shopcart.all()
