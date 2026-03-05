@@ -299,3 +299,100 @@ class TestItem(TestCase):
         data = {"name": "Widget", "quantity": 1}  # missing product_id and price
         item = Item()
         self.assertRaises(DataValidationError, item.deserialize, data)
+
+    def test_item_repr(self):
+        """It should return a string representation of an Item"""
+        shopcart = ShopcartFactory()
+        shopcart.create()
+        item = ItemFactory(shopcart_id=shopcart.id)
+        item.create()
+        self.assertIn(item.name, repr(item))
+        self.assertIn(item.product_id, repr(item))
+
+    @patch("service.models.db.session.commit")
+    def test_item_create_failed(self, exception_mock):
+        """It should raise DataValidationError when item create fails"""
+        exception_mock.side_effect = Exception()
+        shopcart = ShopcartFactory()
+        item = ItemFactory(shopcart_id=shopcart.id)
+        self.assertRaises(DataValidationError, item.create)
+
+    @patch("service.models.db.session.commit")
+    def test_item_update_failed(self, exception_mock):
+        """It should raise DataValidationError when item update fails"""
+        exception_mock.side_effect = Exception()
+        shopcart = ShopcartFactory()
+        item = ItemFactory(shopcart_id=shopcart.id)
+        self.assertRaises(DataValidationError, item.update)
+
+    @patch("service.models.db.session.commit")
+    def test_item_delete_failed(self, exception_mock):
+        """It should raise DataValidationError when item delete fails"""
+        exception_mock.side_effect = Exception()
+        shopcart = ShopcartFactory()
+        item = ItemFactory(shopcart_id=shopcart.id)
+        self.assertRaises(DataValidationError, item.delete)
+
+    def test_item_deserialize_attribute_error(self):
+        """It should raise DataValidationError on AttributeError during Item deserialization"""
+        class NoGetMethod:
+            def __getitem__(self, key):
+                if key == "product_id":
+                    return "abc"
+                if key == "name":
+                    return "Widget"
+                raise KeyError(key)
+        item = Item()
+        self.assertRaises(DataValidationError, item.deserialize, NoGetMethod())
+
+    def test_item_deserialize_type_error(self):
+        """It should raise DataValidationError on TypeError during Item deserialization"""
+        item = Item()
+        self.assertRaises(DataValidationError, item.deserialize, None)
+
+    def test_item_all(self):
+        """It should return all Items in the database"""
+        shopcart = ShopcartFactory()
+        shopcart.create()
+        for item in ItemFactory.create_batch(3, shopcart_id=shopcart.id):
+            item.create()
+        items = Item.all()
+        self.assertEqual(len(items), 3)
+
+    def test_item_find_by_shopcart_id(self):
+        """It should return Items for a given shopcart_id"""
+        shopcart = ShopcartFactory()
+        shopcart.create()
+        item = ItemFactory(shopcart_id=shopcart.id)
+        item.create()
+        found = list(Item.find_by_shopcart_id(shopcart.id))
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0].id, item.id)
+
+    def test_shopcart_deserialize_key_error(self):
+        """It should raise DataValidationError when name is missing from Shopcart data"""
+        shopcart = Shopcart()
+        self.assertRaises(DataValidationError, shopcart.deserialize, {})
+
+    def test_shopcart_deserialize_attribute_error(self):
+        """It should raise DataValidationError on AttributeError during Shopcart deserialization"""
+        class NoGetMethod:
+            def __getitem__(self, key):
+                if key == "name":
+                    return "TestCart"
+                raise KeyError(key)
+        shopcart = Shopcart()
+        self.assertRaises(DataValidationError, shopcart.deserialize, NoGetMethod())
+
+    def test_shopcart_deserialize_type_error(self):
+        """It should raise DataValidationError on TypeError during Shopcart deserialization"""
+        shopcart = Shopcart()
+        self.assertRaises(DataValidationError, shopcart.deserialize, None)
+
+    def test_shopcart_find_by_name(self):
+        """It should return Shopcarts matching a given name"""
+        shopcart = ShopcartFactory(name="UniqueTestName")
+        shopcart.create()
+        found = list(Shopcart.find_by_name("UniqueTestName"))
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0].id, shopcart.id)

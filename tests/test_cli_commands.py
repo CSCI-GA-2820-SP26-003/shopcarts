@@ -42,3 +42,18 @@ class TestFlaskCLI(TestCase):
         with patch.dict(os.environ, {"FLASK_APP": "wsgi:app"}, clear=True):
             result = self.runner.invoke(db_create)
             self.assertEqual(result.exit_code, 0)
+
+    def test_init_logging_with_handler(self):
+        """It should set formatter on existing logging handlers"""
+        import logging
+        from wsgi import app
+        from service.common.log_handlers import init_logging
+
+        gunicorn_logger = logging.getLogger("gunicorn.error")
+        handler = logging.StreamHandler()
+        gunicorn_logger.addHandler(handler)
+        try:
+            init_logging(app, "gunicorn.error")
+            self.assertIsNotNone(handler.formatter)
+        finally:
+            gunicorn_logger.removeHandler(handler)
