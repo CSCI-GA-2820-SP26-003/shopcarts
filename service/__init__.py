@@ -36,6 +36,7 @@ def create_app():
     # Initialize Plugins
     # pylint: disable=import-outside-toplevel
     from service.models import db
+
     db.init_app(app)
 
     with app.app_context():
@@ -45,7 +46,9 @@ def create_app():
         from service.common import error_handlers, cli_commands  # noqa: F401, E402
 
         try:
-            db.create_all()
+            # Don't initialize the DB when running tests
+            if not app.config.get("TESTING", False):
+                db.create_all()
         except Exception as error:  # pylint: disable=broad-except
             app.logger.critical("%s: Cannot continue", error)
             # gunicorn requires exit code 4 to stop spawning workers when they die
