@@ -3,6 +3,9 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Language-Python-blue.svg)](https://python.org/)
 
+[![Build Status](https://github.com/CSCI-GA-2820-SP26-003/shopcarts/actions/workflows/workflow.yml/badge.svg)]
+(https://github.com/CSCI-GA-2820-SP26-003/shopcarts/actions)
+
 ## Overview
 
 The Shopcarts service allows customers to manage a collection of products they want to purchase. Each shopcart is associated with a customer via their customer ID and can contain multiple items. Each item references a product ID, name, quantity, and price at the time it was added.
