@@ -321,7 +321,9 @@ class TestItem(TestCase):
     def test_item_deserialize_attribute_error(self):
         """It should raise DataValidationError on AttributeError during Item deserialization"""
 
-        class NoGetMethod:
+        class NoGetMethod:  # pylint: disable=too-few-public-methods
+            """Test helper class that mimics a dict but lacks a get() method."""
+
             def __getitem__(self, key):
                 if key == "product_id":
                     return "abc"
@@ -364,14 +366,18 @@ class TestItem(TestCase):
     def test_shopcart_deserialize_attribute_error(self):
         """It should raise DataValidationError on AttributeError during Shopcart deserialization"""
 
-        class NoGetMethod:
+        class NoGetMethod:  # pylint: disable=too-few-public-methods
+            """Test helper class that mimics a dict but lacks a get() method."""
+
             def __getitem__(self, key):
                 if key == "name":
                     return "TestCart"
                 raise KeyError(key)
 
         shopcart = Shopcart()
-        self.assertRaises(DataValidationError, shopcart.deserialize, NoGetMethod())
+
+        with self.assertRaises(DataValidationError):
+            shopcart.deserialize(NoGetMethod())
 
     def test_shopcart_deserialize_type_error(self):
         """It should raise DataValidationError on TypeError during Shopcart deserialization"""
