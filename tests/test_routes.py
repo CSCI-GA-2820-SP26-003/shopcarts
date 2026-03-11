@@ -139,7 +139,9 @@ class TestShopcartService(TestCase):
         # Check the data is correct
         new_shopcart = resp.get_json()
         self.assertEqual(new_shopcart["name"], shopcart.name, "Names does not match")
-        self.assertEqual(new_shopcart["userid"], shopcart.userid, "UserID does not match")
+        self.assertEqual(
+            new_shopcart["userid"], shopcart.userid, "UserID does not match"
+        )
         self.assertEqual(
             new_shopcart["active"], shopcart.active, "Active state does not match"
         )
@@ -149,11 +151,13 @@ class TestShopcartService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         new_shopcart = resp.get_json()
         self.assertEqual(new_shopcart["name"], shopcart.name, "Names does not match")
-        self.assertEqual(new_shopcart["userid"], shopcart.userid, "UserID does not match")
+        self.assertEqual(
+            new_shopcart["userid"], shopcart.userid, "UserID does not match"
+        )
         self.assertEqual(
             new_shopcart["active"], shopcart.active, "Active state does not match"
         )
-        
+
     def test_get_shopcart(self):
         """It should return a single Shopcart"""
         shopcart = ShopcartFactory()
@@ -294,6 +298,7 @@ class TestShopcartService(TestCase):
         self.assertEqual(data["id"], item_id)
         self.assertEqual(data["shopcart_id"], shopcart.id)
         self.assertEqual(data["name"], "XXXX")
+
     ######################################################################
     # DELETE A SHOPCART ITEM
     ######################################################################
@@ -327,6 +332,7 @@ class TestShopcartService(TestCase):
         resp = self.client.delete(f"{BASE_URL}/999999/items/1")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(resp.is_json)
+
     ######################################################################
     # DELETE A SHOPCART
     ######################################################################
@@ -360,7 +366,11 @@ class TestShopcartService(TestCase):
     def test_update_shopcart(self):
         """It should Update an existing Shopcart"""
         shopcart = self._create_shopcarts(1)[0]
-        updated_data = {"name": "UpdatedName", "userid": shopcart.userid, "active": shopcart.active}
+        updated_data = {
+            "name": "UpdatedName",
+            "userid": shopcart.userid,
+            "active": shopcart.active,
+        }
         resp = self.client.put(
             f"{BASE_URL}/{shopcart.id}",
             json=updated_data,
@@ -427,7 +437,5 @@ class TestShopcartService(TestCase):
 
     def test_bad_request_from_invalid_data(self):
         """It should return 400 when request data is invalid"""
-        resp = self.client.post(
-            BASE_URL, json={}, content_type="application/json"
-        )
+        resp = self.client.post(BASE_URL, json={}, content_type="application/json")
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)

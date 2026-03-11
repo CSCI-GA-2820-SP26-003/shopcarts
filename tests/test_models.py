@@ -79,8 +79,6 @@ class TestShopcart(TestCase):
         self.assertEqual(data.userid, shopcart.userid)
         self.assertEqual(data.active, shopcart.active)
 
-    # Todo: Add your test cases here...
-
     def test_list_all_shopcarts(self):
         """It should List all Shopcarts in the database"""
         shopcarts = Shopcart.all()
@@ -90,8 +88,6 @@ class TestShopcart(TestCase):
         # Assert that there are not 5 shopcarts in the database
         shopcarts = Shopcart.all()
         self.assertEqual(len(shopcarts), 5)
-
-    
 
     def test_add_a_shopcart(self):
         """It should Create an shopcart and add it to the database"""
@@ -152,7 +148,6 @@ class TestShopcart(TestCase):
         self.assertEqual(shopcarts, [])
         shopcart = ShopcartFactory()
         shopcart.create()
-        # Assert that it was assigned an id and shows up in the database
         self.assertIsNotNone(shopcart.id)
         shopcarts = Shopcart.all()
         self.assertEqual(len(shopcarts), 1)
@@ -167,16 +162,6 @@ class TestShopcart(TestCase):
         exception_mock.side_effect = Exception()
         shopcart = ShopcartFactory()
         self.assertRaises(DataValidationError, shopcart.delete)
-
-    def test_list_all_shopcarts(self):
-        """It should List all Shopcarts in the database"""
-        shopcarts = Shopcart.all()
-        self.assertEqual(shopcarts, [])
-        for shopcart in ShopcartFactory.create_batch(5):
-            shopcart.create()
-        # Assert that there are not 5 shopcarts in the database
-        shopcarts = Shopcart.all()
-        self.assertEqual(len(shopcarts), 5)
 
     def test_read_shopcart_not_found(self):
         """It should return None when Shopcart is not found"""
@@ -335,13 +320,17 @@ class TestItem(TestCase):
 
     def test_item_deserialize_attribute_error(self):
         """It should raise DataValidationError on AttributeError during Item deserialization"""
-        class NoGetMethod:
+
+        class NoGetMethod:  # pylint: disable=too-few-public-methods
+            """Test helper class that mimics a dict but lacks a get() method."""
+
             def __getitem__(self, key):
                 if key == "product_id":
                     return "abc"
                 if key == "name":
                     return "Widget"
                 raise KeyError(key)
+
         item = Item()
         self.assertRaises(DataValidationError, item.deserialize, NoGetMethod())
 
@@ -376,13 +365,19 @@ class TestItem(TestCase):
 
     def test_shopcart_deserialize_attribute_error(self):
         """It should raise DataValidationError on AttributeError during Shopcart deserialization"""
-        class NoGetMethod:
+
+        class NoGetMethod:  # pylint: disable=too-few-public-methods
+            """Test helper class that mimics a dict but lacks a get() method."""
+
             def __getitem__(self, key):
                 if key == "name":
                     return "TestCart"
                 raise KeyError(key)
+
         shopcart = Shopcart()
-        self.assertRaises(DataValidationError, shopcart.deserialize, NoGetMethod())
+
+        with self.assertRaises(DataValidationError):
+            shopcart.deserialize(NoGetMethod())
 
     def test_shopcart_deserialize_type_error(self):
         """It should raise DataValidationError on TypeError during Shopcart deserialization"""
