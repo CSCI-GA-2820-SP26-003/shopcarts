@@ -154,7 +154,7 @@ def update_shopcarts(shopcart_id):
 
 ######################################################################
 # DELETE A SHOPCART
-######################################################################
+#######################################################################
 @app.route("/shopcarts/<int:shopcart_id>", methods=["DELETE"])
 def delete_shopcart(shopcart_id):
     """Deletes a Shopcart"""
@@ -237,6 +237,7 @@ def get_items(shopcart_id, item_id):
 
     return jsonify(item.serialize()), status.HTTP_200_OK
 
+
 ######################################################################
 # UPDATE AN ITEM
 ######################################################################
@@ -266,7 +267,6 @@ def update_items(shopcart_id, item_id):
     item.update()
 
     return jsonify(item.serialize()), status.HTTP_200_OK
-
 
 
 ######################################################################
@@ -303,6 +303,8 @@ def delete_items(shopcart_id, item_id):
 
     item.delete()
     return ("", status.HTTP_204_NO_CONTENT)
+
+
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################

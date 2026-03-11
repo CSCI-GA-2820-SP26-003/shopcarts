@@ -20,6 +20,7 @@ CLI Command Extensions for Flask
 
 # pylint: disable=duplicate-code
 import os
+import logging
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
@@ -27,6 +28,7 @@ from click.testing import CliRunner
 # pylint: disable=unused-import
 from wsgi import app  # noqa: F401
 from service.common.cli_commands import db_create  # noqa: E402
+from service.common.log_handlers import init_logging
 
 
 class TestFlaskCLI(TestCase):
@@ -45,9 +47,6 @@ class TestFlaskCLI(TestCase):
 
     def test_init_logging_with_handler(self):
         """It should set formatter on existing logging handlers"""
-        import logging
-        from wsgi import app
-        from service.common.log_handlers import init_logging
 
         gunicorn_logger = logging.getLogger("gunicorn.error")
         handler = logging.StreamHandler()
