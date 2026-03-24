@@ -24,7 +24,7 @@ import logging
 from unittest.mock import patch
 from unittest import TestCase
 from wsgi import app
-from service.models import Shopcart, Item, DataValidationError, db
+from service.models import Shopcart, Item, DataValidationError, CartStatus, db
 from .factories import ShopcartFactory, ItemFactory
 
 DATABASE_URI = os.getenv(
@@ -391,3 +391,21 @@ class TestItem(TestCase):
         found = list(Shopcart.find_by_name("UniqueTestName"))
         self.assertEqual(len(found), 1)
         self.assertEqual(found[0].id, shopcart.id)
+
+    def test_shopcart_find_by_status(self):
+        """It should return Shopcarts matching a given status"""
+        ShopcartFactory(status=CartStatus.ACTIVE).create()
+        ShopcartFactory(status=CartStatus.ABANDONED).create()
+        ShopcartFactory(status=CartStatus.ABANDONED).create()
+
+        found = Shopcart.find_by_status(CartStatus.ABANDONED)
+        self.assertEqual(len(found), 2)
+        for cart in found:
+            self.assertEqual(cart.status, CartStatus.ABANDONED)
+
+    def test_shopcart_find_by_status_returns_empty(self):
+        """It should return an empty list when no carts match the status"""
+        ShopcartFactory(status=CartStatus.ACTIVE).create()
+
+        found = Shopcart.find_by_status(CartStatus.CHECKED_OUT)
+        self.assertEqual(found, [])

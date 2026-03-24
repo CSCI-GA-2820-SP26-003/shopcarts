@@ -3,7 +3,8 @@ Test Factory to make fake objects for testing
 """
 
 import factory
-from service.models import Shopcart, Item
+import factory.fuzzy
+from service.models import Shopcart, Item, CartStatus
 
 
 class ItemFactory(factory.Factory):
@@ -34,3 +35,4 @@ class ShopcartFactory(factory.Factory):
     name = factory.Faker("first_name")
     userid = factory.Faker("user_name")
     active = factory.Faker("pybool")
+    status = factory.fuzzy.FuzzyChoice(list(CartStatus))
