@@ -5,6 +5,7 @@ All of the models are stored in this module
 """
 
 import logging
+from enum import Enum
 from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger("flask.app")
@@ -15,6 +16,14 @@ db = SQLAlchemy()
 
 class DataValidationError(Exception):
     """Used for an data validation errors when deserializing"""
+
+
+class CartStatus(str, Enum):
+    """Enumeration of valid Shopcart statuses"""
+
+    ACTIVE = "active"
+    ABANDONED = "abandoned"
+    CHECKED_OUT = "checked_out"
 
 
 class Item(db.Model):
@@ -138,6 +147,9 @@ class Shopcart(db.Model):
     name = db.Column(db.String(63))
     userid = db.Column(db.String(73))
     active = db.Column(db.Boolean, default=True)
+    status = db.Column(
+        db.Enum(CartStatus), nullable=False, default=CartStatus.ACTIVE
+    )
     items = db.relationship(
         "Item", backref="shopcart", lazy=True, cascade="all, delete-orphan"
     )
@@ -194,6 +206,7 @@ class Shopcart(db.Model):
             "name": self.name,
             "userid": self.userid,
             "active": self.active,
+            "status": self.status.value,
             "items": [item.serialize() for item in self.items],
             "total_price": self.total_price,
         }
@@ -209,6 +222,7 @@ class Shopcart(db.Model):
             self.name = data["name"]
             self.userid = data.get("userid")
             self.active = data.get("active", True)
+            self.status = CartStatus(data.get("status", CartStatus.ACTIVE.value))
         except AttributeError as error:
             raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:
@@ -247,3 +261,13 @@ class Shopcart(db.Model):
         """
         logger.info("Processing name query for %s ...", name)
         return cls.query.filter(cls.name == name)
+
+    @classmethod
+    def find_by_status(cls, cart_status):
+        """Returns all Shopcarts with the given status
+
+        Args:
+            cart_status (CartStatus): the status to filter by
+        """
+        logger.info("Processing status query for %s ...", cart_status)
+        return cls.query.filter(cls.status == cart_status).all()

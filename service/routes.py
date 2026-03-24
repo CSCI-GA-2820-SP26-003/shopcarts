@@ -23,7 +23,7 @@ and Delete Shopcart
 
 from flask import jsonify, request, url_for, abort
 from flask import current_app as app  # Import Flask application
-from service.models import Shopcart, Item
+from service.models import Shopcart, Item, CartStatus
 from service.common import status  # HTTP Status Codes
 
 
@@ -48,9 +48,23 @@ def index():
 ######################################################################
 @app.route("/shopcarts", methods=["GET"])
 def list_shopcarts():
-    """Returns all of the Shopcarts"""
+    """Returns all of the Shopcarts, optionally filtered by status"""
     app.logger.info("Request for Shopcart list")
-    shopcarts = Shopcart.all()
+
+    status_param = request.args.get("status")
+    if status_param is not None:
+        try:
+            cart_status = CartStatus(status_param)
+        except ValueError:
+            abort(
+                status.HTTP_400_BAD_REQUEST,
+                f"Invalid status '{status_param}'. Valid values are: "
+                + ", ".join(s.value for s in CartStatus),
+            )
+        shopcarts = Shopcart.find_by_status(cart_status)
+    else:
+        shopcarts = Shopcart.all()
+
     results = [shopcart.serialize() for shopcart in shopcarts]
     return jsonify(results), status.HTTP_200_OK
 

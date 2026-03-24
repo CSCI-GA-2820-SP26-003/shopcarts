@@ -24,7 +24,7 @@ import logging
 from unittest import TestCase
 from wsgi import app
 from service.common import status
-from service.models import db, Shopcart, Item
+from service.models import db, Shopcart, Item, CartStatus
 from .factories import ShopcartFactory, ItemFactory
 
 DATABASE_URI = os.getenv(
@@ -439,3 +439,76 @@ class TestShopcartService(TestCase):
         """It should return 400 when request data is invalid"""
         resp = self.client.post(BASE_URL, json={}, content_type="application/json")
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    ######################################################################
+    #  F I L T E R   B Y   S T A T U S   T E S T S
+    ######################################################################
+
+    def test_list_shopcarts_filter_by_status(self):
+        """It should return only carts matching the requested status"""
+        # Create carts with known statuses directly via model
+        active_cart = ShopcartFactory(status=CartStatus.ACTIVE)
+        active_cart.create()
+        abandoned_cart = ShopcartFactory(status=CartStatus.ABANDONED)
+        abandoned_cart.create()
+        checked_out_cart = ShopcartFactory(status=CartStatus.CHECKED_OUT)
+        checked_out_cart.create()
+
+        resp = self.client.get(f"{BASE_URL}?status=active")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["status"], "active")
+        self.assertEqual(data[0]["id"], active_cart.id)
+
+    def test_list_shopcarts_filter_abandoned(self):
+        """It should return only abandoned carts"""
+        ShopcartFactory(status=CartStatus.ACTIVE).create()
+        abandoned1 = ShopcartFactory(status=CartStatus.ABANDONED)
+        abandoned1.create()
+        abandoned2 = ShopcartFactory(status=CartStatus.ABANDONED)
+        abandoned2.create()
+
+        resp = self.client.get(f"{BASE_URL}?status=abandoned")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 2)
+        for cart in data:
+            self.assertEqual(cart["status"], "abandoned")
+
+    def test_list_shopcarts_filter_checked_out(self):
+        """It should return only checked_out carts"""
+        ShopcartFactory(status=CartStatus.ACTIVE).create()
+        checked_out = ShopcartFactory(status=CartStatus.CHECKED_OUT)
+        checked_out.create()
+
+        resp = self.client.get(f"{BASE_URL}?status=checked_out")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["status"], "checked_out")
+
+    def test_list_shopcarts_filter_returns_empty_when_none_match(self):
+        """It should return an empty list when no carts match the filter"""
+        ShopcartFactory(status=CartStatus.ACTIVE).create()
+
+        resp = self.client.get(f"{BASE_URL}?status=abandoned")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data, [])
+
+    def test_list_shopcarts_filter_invalid_status_returns_400(self):
+        """It should return 400 for an invalid status value"""
+        resp = self.client.get(f"{BASE_URL}?status=nonexistent")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_list_shopcarts_no_filter_returns_all(self):
+        """It should return all carts when no status filter is provided"""
+        ShopcartFactory(status=CartStatus.ACTIVE).create()
+        ShopcartFactory(status=CartStatus.ABANDONED).create()
+        ShopcartFactory(status=CartStatus.CHECKED_OUT).create()
+
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 3)
