@@ -167,6 +167,38 @@ def update_shopcarts(shopcart_id):
 
 
 ######################################################################
+# CHECKOUT ACTION
+######################################################################
+@app.route("/shopcarts/<int:shopcart_id>/checkout", methods=["PUT"])
+def checkout_shopcart(shopcart_id):
+    """
+    Checkout a Shopcart
+
+    This endpoint transitions a cart's status to 'checked_out'.
+    Returns 409 if the cart is already checked out.
+    """
+    app.logger.info("Request to checkout shopcart with id: %s", shopcart_id)
+
+    shopcart = Shopcart.find(shopcart_id)
+    if not shopcart:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Shopcart with id '{shopcart_id}' was not found.",
+        )
+
+    if shopcart.status == CartStatus.CHECKED_OUT:
+        abort(
+            status.HTTP_409_CONFLICT,
+            f"Shopcart with id '{shopcart_id}' is already checked out.",
+        )
+
+    shopcart.status = CartStatus.CHECKED_OUT
+    shopcart.update()
+
+    return jsonify(shopcart.serialize()), status.HTTP_200_OK
+
+
+######################################################################
 # DELETE A SHOPCART
 #######################################################################
 @app.route("/shopcarts/<int:shopcart_id>", methods=["DELETE"])

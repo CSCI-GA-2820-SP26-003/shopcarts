@@ -502,6 +502,34 @@ class TestShopcartService(TestCase):
         resp = self.client.get(f"{BASE_URL}?status=nonexistent")
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
+    ######################################################################
+    #  C H E C K O U T   A C T I O N   T E S T S
+    ######################################################################
+
+    def test_checkout_active_cart(self):
+        """It should checkout an active cart and return 200 with status checked_out"""
+        cart = ShopcartFactory(status=CartStatus.ACTIVE)
+        cart.create()
+
+        resp = self.client.put(f"{BASE_URL}/{cart.id}/checkout")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["status"], "checked_out")
+        self.assertEqual(data["id"], cart.id)
+
+    def test_checkout_already_checked_out_cart(self):
+        """It should return 409 when cart is already checked out"""
+        cart = ShopcartFactory(status=CartStatus.CHECKED_OUT)
+        cart.create()
+
+        resp = self.client.put(f"{BASE_URL}/{cart.id}/checkout")
+        self.assertEqual(resp.status_code, status.HTTP_409_CONFLICT)
+
+    def test_checkout_cart_not_found(self):
+        """It should return 404 when checking out a non-existent cart"""
+        resp = self.client.put(f"{BASE_URL}/999999/checkout")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_list_shopcarts_no_filter_returns_all(self):
         """It should return all carts when no status filter is provided"""
         ShopcartFactory(status=CartStatus.ACTIVE).create()
