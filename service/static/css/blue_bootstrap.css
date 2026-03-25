@@ -1,0 +1,31 @@
+/* Custom styles for Shopcart Admin UI */
+
+body {
+    padding-top: 20px;
+    padding-bottom: 40px;
+}
+
+.flash-message {
+    font-size: 14px;
+    font-weight: bold;
+    color: #2c3e50;
+    padding: 5px 10px;
+}
+
+.well {
+    margin-bottom: 20px;
+}
+
+.btn-toolbar {
+    margin-top: 15px;
+}
+
+.table {
+    margin-top: 10px;
+}
+
+.footer {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e5e5;
+}
