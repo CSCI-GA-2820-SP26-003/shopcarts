@@ -35,6 +35,17 @@ Scenario: Create a shopcart
     Then I should see the message "Success"
     And I should see "Birthday Cart" in the results
 
+Scenario: Read a shopcart
+    Given I am on the "Shopcart Admin" page
+    When I press the "List" button
+    Then I should see the message "Success"
+    When I set the "Shopcart ID" to the ID of "Weekend Cart"
+    And I press the "Read" button
+    Then I should see the message "Success"
+    And I should see "Weekend Cart" in the "Shopcart Name" field
+    And I should see "user001" in the "Shopcart Userid" field
+    And I should see "active" in the "Shopcart Status" field
+
 Scenario: List all shopcarts
     Given I am on the "Shopcart Admin" page
     When I press the "List" button
@@ -91,6 +102,21 @@ Scenario: Create an item in a shopcart
     Then I should see the message "Success"
     And I should see "Yellow Jacket" in the item results
     And I should see "Blue T-Shirt" in the item results
+
+Scenario: Read an item in a shopcart
+    Given I am on the "Shopcart Admin" page
+    When I press the "List" button
+    Then I should see the message "Success"
+    When I set the "Item Shopcart ID" to the ID of "Weekend Cart"
+    And I press the "List Item" button
+    Then I should see the message "Success"
+    When I set the "Item ID" to the item ID of "Blue T-Shirt"
+    And I set the "Item Shopcart ID" to the ID of "Weekend Cart"
+    And I press the "Read Item" button
+    Then I should see the message "Success"
+    And I should see "Blue T-Shirt" in the "Item Name" field
+    And I should see "PROD-001" in the "Item Product ID" field
+    And I should see "2" in the "Item Quantity" field
 
 Scenario: Update an item in a shopcart
     Given I am on the "Shopcart Admin" page
