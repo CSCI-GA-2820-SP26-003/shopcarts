@@ -116,6 +116,38 @@ Scenario: Update an item in a shopcart
     And I should see "Green T-Shirt" in the item results
     And I should not see "Blue T-Shirt" in the item results
 
+Scenario: Delete a shopcart
+    Given I am on the "Shopcart Admin" page
+    When I press the "List" button
+    Then I should see the message "Success"
+    And I should see "Old Cart" in the results
+    When I set the "Shopcart ID" to the ID of "Old Cart"
+    And I press the "Delete" button
+    Then I should see the message "Shopcart has been Deleted!"
+    When I press the "List" button
+    Then I should see the message "Success"
+    And I should not see "Old Cart" in the results
+    And I should see "Weekend Cart" in the results
+
+Scenario: Delete an item from a shopcart
+    Given I am on the "Shopcart Admin" page
+    When I press the "List" button
+    Then I should see the message "Success"
+    When I set the "Item Shopcart ID" to the ID of "Weekend Cart"
+    And I press the "List Item" button
+    Then I should see the message "Success"
+    And I should see "Blue T-Shirt" in the item results
+    And I should see "Red Hat" in the item results
+    When I set the "Item ID" to the item ID of "Red Hat"
+    And I set the "Item Shopcart ID" to the ID of "Weekend Cart"
+    And I press the "Delete Item" button
+    Then I should see the message "Item has been Deleted!"
+    When I set the "Item Shopcart ID" to the ID of "Weekend Cart"
+    And I press the "List Item" button
+    Then I should see the message "Success"
+    And I should see "Blue T-Shirt" in the item results
+    And I should not see "Red Hat" in the item results
+
 Scenario: List items in a shopcart
     Given I am on the "Shopcart Admin" page
     When I press the "List" button
