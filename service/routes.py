@@ -58,7 +58,7 @@ def index():
 @app.route("/health")
 def health():
     """Health Status"""
-    return jsonify(dict(status="OK")), status.HTTP_200_OK
+    return jsonify({"status": "OK"}), status.HTTP_200_OK
 
 
 ######################################################################
