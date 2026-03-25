@@ -81,6 +81,43 @@ $(function () {
         });
     });
 
+    // -------- Update a Shopcart --------
+    $("#update-btn").click(function () {
+        var shopcart_id = $("#shopcart_id").val();
+        var name = $("#shopcart_name").val();
+        var userid = $("#shopcart_userid").val();
+        var cart_status = $("#shopcart_status").val();
+
+        $("#flash_message").empty();
+
+        if (!shopcart_id) {
+            flash_message("Error: Shopcart ID is required to update");
+            return;
+        }
+
+        var data = {
+            "name": name,
+            "userid": userid,
+            "status": cart_status
+        };
+
+        var ajax = $.ajax({
+            type: "PUT",
+            url: "/shopcarts/" + shopcart_id,
+            contentType: "application/json",
+            data: JSON.stringify(data),
+        });
+
+        ajax.done(function(res){
+            update_form_data(res);
+            flash_message("Success");
+        });
+
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message);
+        });
+    });
+
     // -------- Search Shopcarts by Status --------
     $("#search-btn").click(function () {
         var status = $("#shopcart_status").val();
@@ -237,6 +274,51 @@ $(function () {
         var ajax = $.ajax({
             type: "POST",
             url: "/shopcarts/" + shopcart_id + "/items",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+        });
+
+        ajax.done(function(res){
+            update_item_form_data(res);
+            flash_message("Success");
+        });
+
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message);
+        });
+    });
+
+    // -------- Update an Item in a Shopcart --------
+    $("#update-item-btn").click(function () {
+        var shopcart_id = $("#item_shopcart_id").val();
+        var item_id = $("#item_id").val();
+        var product_id = $("#item_product_id").val();
+        var name = $("#item_name").val();
+        var quantity = $("#item_quantity").val();
+        var price = $("#item_price").val();
+
+        $("#flash_message").empty();
+
+        if (!shopcart_id) {
+            flash_message("Error: Shopcart ID is required to update an item");
+            return;
+        }
+
+        if (!item_id) {
+            flash_message("Error: Item ID is required to update an item");
+            return;
+        }
+
+        var data = {
+            "product_id": product_id,
+            "name": name,
+            "quantity": parseInt(quantity),
+            "price": parseFloat(price),
+        };
+
+        var ajax = $.ajax({
+            type: "PUT",
+            url: "/shopcarts/" + shopcart_id + "/items/" + item_id,
             contentType: "application/json",
             data: JSON.stringify(data),
         });
