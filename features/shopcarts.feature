@@ -54,6 +54,23 @@ Scenario: Search for shopcarts by status
     And I should not see "Old Cart" in the results
     And I should not see "Completed Cart" in the results
 
+Scenario: Update a shopcart
+    Given I am on the "Shopcart Admin" page
+    When I press the "List" button
+    Then I should see the message "Success"
+    When I set the "Shopcart ID" to the ID of "Weekend Cart"
+    And I set the "Shopcart Name" to "Updated Cart"
+    And I set the "Shopcart Userid" to "user999"
+    And I select "Abandoned" in the "Shopcart Status" dropdown
+    And I press the "Update" button
+    Then I should see the message "Success"
+    And I should see "Updated Cart" in the "Shopcart Name" field
+    And I should see "user999" in the "Shopcart Userid" field
+    When I press the "List" button
+    Then I should see the message "Success"
+    And I should see "Updated Cart" in the results
+    And I should not see "Weekend Cart" in the results
+
 Scenario: Create an item in a shopcart
     Given I am on the "Shopcart Admin" page
     When I press the "List" button
@@ -74,6 +91,30 @@ Scenario: Create an item in a shopcart
     Then I should see the message "Success"
     And I should see "Yellow Jacket" in the item results
     And I should see "Blue T-Shirt" in the item results
+
+Scenario: Update an item in a shopcart
+    Given I am on the "Shopcart Admin" page
+    When I press the "List" button
+    Then I should see the message "Success"
+    When I set the "Item Shopcart ID" to the ID of "Weekend Cart"
+    And I press the "List Item" button
+    Then I should see the message "Success"
+    When I set the "Item ID" to the item ID of "Blue T-Shirt"
+    And I set the "Item Shopcart ID" to the ID of "Weekend Cart"
+    And I set the "Item Product ID" to "PROD-001"
+    And I set the "Item Name" to "Green T-Shirt"
+    And I set the "Item Quantity" to "10"
+    And I set the "Item Price" to "24.99"
+    And I press the "Update Item" button
+    Then I should see the message "Success"
+    And I should see "Green T-Shirt" in the "Item Name" field
+    And I should see "10" in the "Item Quantity" field
+    When I press the "Clear Item" button
+    And I set the "Item Shopcart ID" to the ID of "Weekend Cart"
+    And I press the "List Item" button
+    Then I should see the message "Success"
+    And I should see "Green T-Shirt" in the item results
+    And I should not see "Blue T-Shirt" in the item results
 
 Scenario: List items in a shopcart
     Given I am on the "Shopcart Admin" page

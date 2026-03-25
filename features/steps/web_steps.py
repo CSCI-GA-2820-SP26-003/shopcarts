@@ -194,3 +194,21 @@ def step_impl(context, element_name, shopcart_name):
     element = context.driver.find_element(By.ID, element_id)
     element.clear()
     element.send_keys(shopcart_id)
+
+
+@when('I set the "{element_name}" to the item ID of "{item_name}"')
+def step_impl(context, element_name, item_name):
+    """Find an item ID from the item results table and set it in a form field"""
+    element_id = element_name.lower().replace(" ", "_")
+    rows = context.driver.find_elements(By.CSS_SELECTOR, "#item_results_body tr")
+    item_id = None
+    for row in rows:
+        cells = row.find_elements(By.TAG_NAME, "td")
+        if len(cells) >= 4 and cells[3].text == item_name:
+            item_id = cells[0].text
+            break
+    assert item_id is not None, f"Item '{item_name}' not found in item results"
+
+    element = context.driver.find_element(By.ID, element_id)
+    element.clear()
+    element.send_keys(item_id)
