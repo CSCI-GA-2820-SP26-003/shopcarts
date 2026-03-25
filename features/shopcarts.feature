@@ -116,6 +116,18 @@ Scenario: Update an item in a shopcart
     And I should see "Green T-Shirt" in the item results
     And I should not see "Blue T-Shirt" in the item results
 
+Scenario: Checkout a shopcart
+    Given I am on the "Shopcart Admin" page
+    When I press the "List" button
+    Then I should see the message "Success"
+    When I set the "Shopcart ID" to the ID of "Weekend Cart"
+    And I press the "Checkout" button
+    Then I should see the message "Success"
+    And I should see "checked_out" in the "Shopcart Status" field
+    When I press the "List" button
+    Then I should see the message "Success"
+    And I should see "Weekend Cart" in the results
+
 Scenario: Delete a shopcart
     Given I am on the "Shopcart Admin" page
     When I press the "List" button

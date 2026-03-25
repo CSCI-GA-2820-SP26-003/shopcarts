@@ -118,6 +118,34 @@ $(function () {
         });
     });
 
+    // -------- Checkout a Shopcart --------
+    $("#checkout-btn").click(function () {
+        var shopcart_id = $("#shopcart_id").val();
+
+        $("#flash_message").empty();
+
+        if (!shopcart_id) {
+            flash_message("Error: Shopcart ID is required to checkout");
+            return;
+        }
+
+        var ajax = $.ajax({
+            type: "PUT",
+            url: "/shopcarts/" + shopcart_id + "/checkout",
+            contentType: "application/json",
+            data: '',
+        });
+
+        ajax.done(function(res){
+            update_form_data(res);
+            flash_message("Success");
+        });
+
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message);
+        });
+    });
+
     // -------- Search Shopcarts by Status --------
     $("#search-btn").click(function () {
         var status = $("#shopcart_status").val();
