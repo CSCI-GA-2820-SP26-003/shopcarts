@@ -364,6 +364,10 @@ class TestShopcartService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(data["status"], "OK")
+    def test_admin(self):
+        """It should return the admin UI page"""
+        resp = self.client.get("/admin")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
 
     def test_list_items_shopcart_not_found(self):

@@ -1,6 +1,14 @@
 # Image for a NYU Lab development environment
 FROM quay.io/rofrano/nyu-devops-base:sp26
 
+# Install Chromium and dependencies for Selenium/Behave BDD tests
+RUN sudo apt-get update && \
+    sudo apt-get install -y --no-install-recommends \
+        chromium \
+        chromium-driver && \
+    sudo apt-get clean && \
+    sudo rm -rf /var/lib/apt/lists/*
+
 # Set up the Python development environment
 WORKDIR /app
 COPY Pipfile Pipfile.lock ./

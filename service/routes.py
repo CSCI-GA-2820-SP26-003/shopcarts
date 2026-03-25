@@ -28,6 +28,15 @@ from service.common import status  # HTTP Status Codes
 
 
 ######################################################################
+# ADMIN UI
+######################################################################
+@app.route("/admin")
+def admin():
+    """Admin UI for managing shopcarts"""
+    return app.send_static_file("index.html")
+
+
+######################################################################
 # GET INDEX
 ######################################################################
 @app.route("/")
