@@ -365,6 +365,7 @@ class TestShopcartService(TestCase):
         data = resp.get_json()
         self.assertEqual(data["status"], "OK")
 
+
     def test_list_items_shopcart_not_found(self):
         """It should return 404 when listing items for a non-existent shopcart"""
         resp = self.client.get(f"{BASE_URL}/999999/items")
