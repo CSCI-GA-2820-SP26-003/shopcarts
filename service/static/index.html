@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shopcart Admin</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.1/cerulean/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="/static/css/blue_bootstrap.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="page-header">
+        <h1>Shopcart Admin <small>manage shopping carts</small></h1>
+      </div>
+
+      <!-- Flash Message -->
+      <div class="row">
+        <div class="col-md-12">
+          <span id="flash_message" class="flash-message"></span>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Shopcart Section                                             -->
+      <!-- ============================================================ -->
+      <div class="well">
+        <h3>Shopcart</h3>
+        <form id="shopcart_form">
+          <div class="form-group">
+            <label for="shopcart_id">ID</label>
+            <input type="text" class="form-control" id="shopcart_id" placeholder="enter ID to retrieve" />
+          </div>
+          <div class="form-group">
+            <label for="shopcart_name">Name</label>
+            <input type="text" class="form-control" id="shopcart_name" placeholder="e.g., Weekend Shopping" />
+          </div>
+          <div class="form-group">
+            <label for="shopcart_userid">User ID</label>
+            <input type="text" class="form-control" id="shopcart_userid" placeholder="e.g., user123" />
+          </div>
+          <div class="form-group">
+            <label for="shopcart_status">Status</label>
+            <select class="form-control" id="shopcart_status">
+              <option value="">-- select --</option>
+              <option value="active">Active</option>
+              <option value="abandoned">Abandoned</option>
+              <option value="checked_out">Checked Out</option>
+            </select>
+          </div>
+        </form>
+
+        <div class="btn-toolbar" role="toolbar">
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-success" id="search-btn">Search</button>
+            <button type="button" class="btn btn-default" id="list-btn">List All</button>
+            <button type="button" class="btn btn-default" id="clear-btn">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Item Section                                                 -->
+      <!-- ============================================================ -->
+      <div class="well">
+        <h3>Item</h3>
+        <form id="item_form">
+          <div class="form-group">
+            <label for="item_id">Item ID</label>
+            <input type="text" class="form-control" id="item_id" placeholder="enter Item ID" />
+          </div>
+          <div class="form-group">
+            <label for="item_shopcart_id">Shopcart ID</label>
+            <input type="text" class="form-control" id="item_shopcart_id" placeholder="e.g., 1" />
+          </div>
+          <div class="form-group">
+            <label for="item_product_id">Product ID</label>
+            <input type="text" class="form-control" id="item_product_id" placeholder="e.g., PROD-001" />
+          </div>
+          <div class="form-group">
+            <label for="item_name">Name</label>
+            <input type="text" class="form-control" id="item_name" placeholder="e.g., Blue T-Shirt" />
+          </div>
+          <div class="form-group">
+            <label for="item_quantity">Quantity</label>
+            <input type="text" class="form-control" id="item_quantity" placeholder="e.g., 2" />
+          </div>
+          <div class="form-group">
+            <label for="item_price">Price</label>
+            <input type="text" class="form-control" id="item_price" placeholder="e.g., 19.99" />
+          </div>
+        </form>
+
+        <div class="btn-toolbar" role="toolbar">
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-success" id="list-item-btn">List</button>
+            <button type="button" class="btn btn-default" id="clear-item-btn">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Search Results                                               -->
+      <!-- ============================================================ -->
+      <div id="search_results" class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>User ID</th>
+              <th>Status</th>
+              <th>Items</th>
+              <th>Total Price</th>
+            </tr>
+          </thead>
+          <tbody id="search_results_body"></tbody>
+        </table>
+      </div>
+
+      <!-- Item Results -->
+      <div id="item_results" class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Item ID</th>
+              <th>Shopcart ID</th>
+              <th>Product ID</th>
+              <th>Name</th>
+              <th>Quantity</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+          <tbody id="item_results_body"></tbody>
+        </table>
+      </div>
+
+      <footer class="footer">
+        <p class="text-muted">&copy; NYU DevOps Company 2026</p>
+      </footer>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="/static/js/rest_api.js"></script>
+  </body>
+</html>
