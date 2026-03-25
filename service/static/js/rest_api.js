@@ -238,6 +238,35 @@ $(function () {
         }
     });
 
+    // -------- Delete a Shopcart --------
+    $("#delete-btn").click(function () {
+        var shopcart_id = $("#shopcart_id").val();
+
+        $("#flash_message").empty();
+
+        if (!shopcart_id) {
+            flash_message("Error: Shopcart ID is required to delete");
+            return;
+        }
+
+        var ajax = $.ajax({
+            type: "DELETE",
+            url: "/shopcarts/" + shopcart_id,
+            contentType: "application/json",
+            data: '',
+        });
+
+        ajax.done(function(res){
+            clear_form_data();
+            $("#shopcart_id").val("");
+            flash_message("Shopcart has been Deleted!");
+        });
+
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message);
+        });
+    });
+
     // -------- Clear Shopcart Form --------
     $("#clear-btn").click(function () {
         $("#shopcart_id").val("");
@@ -408,6 +437,40 @@ $(function () {
                 flash_message(res.responseJSON.message);
             });
         }
+    });
+
+    // -------- Delete an Item from a Shopcart --------
+    $("#delete-item-btn").click(function () {
+        var shopcart_id = $("#item_shopcart_id").val();
+        var item_id = $("#item_id").val();
+
+        $("#flash_message").empty();
+
+        if (!shopcart_id) {
+            flash_message("Error: Shopcart ID is required to delete an item");
+            return;
+        }
+
+        if (!item_id) {
+            flash_message("Error: Item ID is required to delete an item");
+            return;
+        }
+
+        var ajax = $.ajax({
+            type: "DELETE",
+            url: "/shopcarts/" + shopcart_id + "/items/" + item_id,
+            contentType: "application/json",
+            data: '',
+        });
+
+        ajax.done(function(res){
+            clear_item_form_data();
+            flash_message("Item has been Deleted!");
+        });
+
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message);
+        });
     });
 
     // -------- Clear Item Form --------
