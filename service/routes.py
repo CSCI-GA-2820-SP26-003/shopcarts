@@ -42,6 +42,13 @@ def index():
         status.HTTP_200_OK,
     )
 
+######################################################################
+# HEALTH ENDPOINT
+######################################################################
+@app.route("/health")
+def health():
+    """Health Status"""
+    return jsonify(dict(status="OK")), status.HTTP_200_OK
 
 ######################################################################
 # LIST ALL SHOPCARTS
