@@ -146,8 +146,8 @@ $(function () {
         });
     });
 
-    // -------- Search Shopcarts by Status --------
-    $("#search-btn").click(function () {
+    // -------- Query Shopcarts by Status --------
+    $("#query-btn").click(function () {
         var status = $("#shopcart_status").val();
 
         var queryString = "";

@@ -44,10 +44,10 @@ Scenario: List all shopcarts
     And I should see "Old Cart" in the results
     And I should see "Completed Cart" in the results
 
-Scenario: Search for shopcarts by status
+Scenario: Query shopcarts by status
     Given I am on the "Shopcart Admin" page
     When I select "Active" in the "Shopcart Status" dropdown
-    And I press the "Search" button
+    And I press the "Query" button
     Then I should see the message "Success"
     And I should see "Weekend Cart" in the results
     And I should see "Holiday Cart" in the results
