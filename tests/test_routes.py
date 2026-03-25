@@ -358,6 +358,13 @@ class TestShopcartService(TestCase):
         data = resp.get_json()
         self.assertEqual(data["name"], "Shopcarts REST API Service")
 
+    def test_health_check(self):
+        """It should return the health status"""
+        resp = self.client.get("/health")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["status"], "OK")
+
     def test_admin(self):
         """It should return the admin UI page"""
         resp = self.client.get("/admin")
