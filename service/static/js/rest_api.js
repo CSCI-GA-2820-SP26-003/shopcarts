@@ -50,6 +50,34 @@ $(function () {
     //  S H O P C A R T   A C T I O N S
     // ****************************************
 
+    // -------- Read a Shopcart --------
+    $("#read-btn").click(function () {
+        var shopcart_id = $("#shopcart_id").val();
+
+        $("#flash_message").empty();
+
+        if (!shopcart_id) {
+            flash_message("Error: Shopcart ID is required to read");
+            return;
+        }
+
+        var ajax = $.ajax({
+            type: "GET",
+            url: "/shopcarts/" + shopcart_id,
+            contentType: "application/json",
+            data: ''
+        });
+
+        ajax.done(function(res){
+            update_form_data(res);
+            flash_message("Success");
+        });
+
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message);
+        });
+    });
+
     // -------- Create a Shopcart --------
     $("#create-btn").click(function () {
         var name = $("#shopcart_name").val();
@@ -192,78 +220,39 @@ $(function () {
 
     // -------- List All Shopcarts --------
     $("#list-btn").click(function () {
-        var shopcart_id = $("#shopcart_id").val();
-        var status = $("#shopcart_status").val();
-
         $("#flash_message").empty();
 
-        // If ID is provided, retrieve that specific shopcart
-        if (shopcart_id) {
-            var ajax = $.ajax({
-                type: "GET",
-                url: "/shopcarts/" + shopcart_id,
-                contentType: "application/json",
-                data: ''
-            });
+        var ajax = $.ajax({
+            type: "GET",
+            url: "/shopcarts",
+            contentType: "application/json",
+            data: ''
+        });
 
-            ajax.done(function(res){
-                $("#search_results_body").empty();
-                var shopcart = res;
-                var row = "<tr id='row_0'>" +
-                    "<td>" + shopcart.id + "</td>" +
-                    "<td>" + shopcart.name + "</td>" +
-                    "<td>" + shopcart.userid + "</td>" +
-                    "<td>" + shopcart.status + "</td>" +
-                    "<td>" + shopcart.items.length + "</td>" +
-                    "<td>" + shopcart.total_price.toFixed(2) + "</td>" +
-                    "</tr>";
-                $("#search_results_body").append(row);
-                flash_message("Success");
-            });
-
-            ajax.fail(function(res){
-                $("#search_results_body").empty();
-                flash_message(res.responseJSON.message);
-            });
-        } else {
-            // No ID: list all, optionally filtered by status
-            var queryString = "";
-            if (status) {
-                queryString = "?status=" + status;
-            }
-
-            var ajax = $.ajax({
-                type: "GET",
-                url: "/shopcarts" + queryString,
-                contentType: "application/json",
-                data: ''
-            });
-
-            ajax.done(function(res){
-                $("#search_results_body").empty();
-                if (res.length === 0) {
-                    flash_message("No Shopcarts found");
-                } else {
-                    for(var i = 0; i < res.length; i++) {
-                        var shopcart = res[i];
-                        var row = "<tr id='row_" + i + "'>" +
-                            "<td>" + shopcart.id + "</td>" +
-                            "<td>" + shopcart.name + "</td>" +
-                            "<td>" + shopcart.userid + "</td>" +
-                            "<td>" + shopcart.status + "</td>" +
-                            "<td>" + shopcart.items.length + "</td>" +
-                            "<td>" + shopcart.total_price.toFixed(2) + "</td>" +
-                            "</tr>";
-                        $("#search_results_body").append(row);
-                    }
-                    flash_message("Success");
+        ajax.done(function(res){
+            $("#search_results_body").empty();
+            if (res.length === 0) {
+                flash_message("No Shopcarts found");
+            } else {
+                for(var i = 0; i < res.length; i++) {
+                    var shopcart = res[i];
+                    var row = "<tr id='row_" + i + "'>" +
+                        "<td>" + shopcart.id + "</td>" +
+                        "<td>" + shopcart.name + "</td>" +
+                        "<td>" + shopcart.userid + "</td>" +
+                        "<td>" + shopcart.status + "</td>" +
+                        "<td>" + shopcart.items.length + "</td>" +
+                        "<td>" + shopcart.total_price.toFixed(2) + "</td>" +
+                        "</tr>";
+                    $("#search_results_body").append(row);
                 }
-            });
+                flash_message("Success");
+            }
+        });
 
-            ajax.fail(function(res){
-                flash_message(res.responseJSON.message);
-            });
-        }
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message);
+        });
     });
 
     // -------- Delete a Shopcart --------
@@ -305,6 +294,40 @@ $(function () {
     // ****************************************
     //  I T E M   A C T I O N S
     // ****************************************
+
+    // -------- Read an Item from a Shopcart --------
+    $("#read-item-btn").click(function () {
+        var shopcart_id = $("#item_shopcart_id").val();
+        var item_id = $("#item_id").val();
+
+        $("#flash_message").empty();
+
+        if (!shopcart_id) {
+            flash_message("Error: Shopcart ID is required to read an item");
+            return;
+        }
+
+        if (!item_id) {
+            flash_message("Error: Item ID is required to read an item");
+            return;
+        }
+
+        var ajax = $.ajax({
+            type: "GET",
+            url: "/shopcarts/" + shopcart_id + "/items/" + item_id,
+            contentType: "application/json",
+            data: ''
+        });
+
+        ajax.done(function(res){
+            update_item_form_data(res);
+            flash_message("Success");
+        });
+
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message);
+        });
+    });
 
     // -------- Create an Item in a Shopcart --------
     $("#create-item-btn").click(function () {
@@ -393,78 +416,45 @@ $(function () {
     // -------- List Items in a Shopcart --------
     $("#list-item-btn").click(function () {
         var shopcart_id = $("#item_shopcart_id").val();
-        var item_id = $("#item_id").val();
 
         $("#flash_message").empty();
 
-        // Shopcart ID is required
         if (!shopcart_id) {
             flash_message("Error: Shopcart ID is required to list items");
             return;
         }
 
-        // If Item ID is provided, retrieve that specific item
-        if (item_id) {
-            var ajax = $.ajax({
-                type: "GET",
-                url: "/shopcarts/" + shopcart_id + "/items/" + item_id,
-                contentType: "application/json",
-                data: ''
-            });
+        var ajax = $.ajax({
+            type: "GET",
+            url: "/shopcarts/" + shopcart_id + "/items",
+            contentType: "application/json",
+            data: ''
+        });
 
-            ajax.done(function(res){
-                $("#item_results_body").empty();
-                var item = res;
-                var row = "<tr id='item_row_0'>" +
-                    "<td>" + item.id + "</td>" +
-                    "<td>" + item.shopcart_id + "</td>" +
-                    "<td>" + item.product_id + "</td>" +
-                    "<td>" + item.name + "</td>" +
-                    "<td>" + item.quantity + "</td>" +
-                    "<td>" + item.price.toFixed(2) + "</td>" +
-                    "</tr>";
-                $("#item_results_body").append(row);
-                flash_message("Success");
-            });
-
-            ajax.fail(function(res){
-                $("#item_results_body").empty();
-                flash_message(res.responseJSON.message);
-            });
-        } else {
-            // No Item ID: list all items in the shopcart
-            var ajax = $.ajax({
-                type: "GET",
-                url: "/shopcarts/" + shopcart_id + "/items",
-                contentType: "application/json",
-                data: ''
-            });
-
-            ajax.done(function(res){
-                $("#item_results_body").empty();
-                if (res.length === 0) {
-                    flash_message("No Items found");
-                } else {
-                    for(var i = 0; i < res.length; i++) {
-                        var item = res[i];
-                        var row = "<tr id='item_row_" + i + "'>" +
-                            "<td>" + item.id + "</td>" +
-                            "<td>" + item.shopcart_id + "</td>" +
-                            "<td>" + item.product_id + "</td>" +
-                            "<td>" + item.name + "</td>" +
-                            "<td>" + item.quantity + "</td>" +
-                            "<td>" + item.price.toFixed(2) + "</td>" +
-                            "</tr>";
-                        $("#item_results_body").append(row);
-                    }
-                    flash_message("Success");
+        ajax.done(function(res){
+            $("#item_results_body").empty();
+            if (res.length === 0) {
+                flash_message("No Items found");
+            } else {
+                for(var i = 0; i < res.length; i++) {
+                    var item = res[i];
+                    var row = "<tr id='item_row_" + i + "'>" +
+                        "<td>" + item.id + "</td>" +
+                        "<td>" + item.shopcart_id + "</td>" +
+                        "<td>" + item.product_id + "</td>" +
+                        "<td>" + item.name + "</td>" +
+                        "<td>" + item.quantity + "</td>" +
+                        "<td>" + item.price.toFixed(2) + "</td>" +
+                        "</tr>";
+                    $("#item_results_body").append(row);
                 }
-            });
+                flash_message("Success");
+            }
+        });
 
-            ajax.fail(function(res){
-                flash_message(res.responseJSON.message);
-            });
-        }
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message);
+        });
     });
 
     // -------- Delete an Item from a Shopcart --------
