@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: shopcarts
-          image: cluster-registry:5000/shopcarts:1.0
+          image: localhost:5000/shopcarts:1.0
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -28,13 +28,13 @@ spec:
                   key: DATABASE_URI
           readinessProbe:
             httpGet:
-              path: /health
+              path: /api/shopcarts/v1/health
               port: 8080
             initialDelaySeconds: 10
             periodSeconds: 5
           livenessProbe:
             httpGet:
-              path: /health
+              path: /api/shopcarts/v1/health
               port: 8080
             initialDelaySeconds: 15
             periodSeconds: 10
