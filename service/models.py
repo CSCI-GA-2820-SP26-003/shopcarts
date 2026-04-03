@@ -234,6 +234,10 @@ class Shopcart(db.Model):
                 "Invalid Shopcart: body of request contained bad or no data "
                 + str(error)
             ) from error
+        except ValueError as error:
+            raise DataValidationError(
+                f"Invalid Shopcart: invalid status [{data.get('status')}]"
+            ) from error
         return self
 
     ##################################################
