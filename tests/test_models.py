@@ -409,3 +409,12 @@ class TestItem(TestCase):
 
         found = Shopcart.find_by_status(CartStatus.CHECKED_OUT)
         self.assertEqual(found, [])
+
+    def test_shopcart_deserialize_invalid_status(self):
+        """It should raise DataValidationError for an invalid shopcart status"""
+        shopcart = Shopcart()
+        self.assertRaises(
+            DataValidationError,
+            shopcart.deserialize,
+            {"name": "TestCart", "status": "not-a-real-status"},
+        )

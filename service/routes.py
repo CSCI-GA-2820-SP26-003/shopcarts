@@ -173,7 +173,8 @@ def update_shopcarts(shopcart_id):
     shopcart = Shopcart.find(shopcart_id)
     if not shopcart:
         abort(
-            status.HTTP_404_NOT_FOUND, f"Account with id '{shopcart_id}' was not found."
+            status.HTTP_404_NOT_FOUND,
+            f"Shopcart with id '{shopcart_id}' was not found.",
         )
 
     # Update from the json in the body of the request
@@ -291,12 +292,20 @@ def get_items(shopcart_id, item_id):
         "Request to retrieve Item %s for Shopcart id: %s", (item_id, shopcart_id)
     )
 
-    # See if the item exists and abort if it doesn't
-    item = Item.find(item_id)
-    if not item:
+    # See if the shopcart exists and abort if it doesn't
+    shopcart = Shopcart.find(shopcart_id)
+    if not shopcart:
         abort(
             status.HTTP_404_NOT_FOUND,
-            f"Shopcart with id '{item_id}' could not be found.",
+            f"Shopcart with id '{shopcart_id}' could not be found.",
+        )
+
+    # See if the item exists and belongs to this shopcart
+    item = Item.find(item_id)
+    if not item or item.shopcart_id != shopcart.id:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Item with id '{item_id}' was not found in shopcart '{shopcart_id}'.",
         )
 
     return jsonify(item.serialize()), status.HTTP_200_OK
@@ -317,12 +326,20 @@ def update_items(shopcart_id, item_id):
     )
     check_content_type("application/json")
 
-    # See if the item exists and abort if it doesn't
-    item = Item.find(item_id)
-    if not item:
+    # See if the shopcart exists and abort if it doesn't
+    shopcart = Shopcart.find(shopcart_id)
+    if not shopcart:
         abort(
             status.HTTP_404_NOT_FOUND,
-            f"Shopcart with id '{item_id}' could not be found.",
+            f"Shopcart with id '{shopcart_id}' could not be found.",
+        )
+
+    # See if the item exists and belongs to this shopcart
+    item = Item.find(item_id)
+    if not item or item.shopcart_id != shopcart.id:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Item with id '{item_id}' was not found in shopcart '{shopcart_id}'.",
         )
 
     # Update from the json in the body of the request
