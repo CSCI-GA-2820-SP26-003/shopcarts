@@ -63,8 +63,17 @@ cluster-rm: ## Remove a K3D Kubernetes cluster
 	$(info Removing Kubernetes cluster...)
 	k3d cluster delete nyu-devops
 
+.PHONY: db-creds
+db-creds: ## Create Kubernetes secret for PostgreSQL credentials
+	$(info Creating PostgreSQL credentials secret...)
+	-kubectl create secret generic postgres-creds \
+		--from-literal=POSTGRES_USER=postgres \
+		--from-literal=POSTGRES_PASSWORD=pgs3cr3t \
+		--from-literal=POSTGRES_DB=postgres \
+		--from-literal=DATABASE_URI="postgresql+psycopg://postgres:pgs3cr3t@postgres:5432/postgres"
+
 .PHONY: deploy
-deploy: ## Deploy the service on local Kubernetes
+deploy: db-creds ## Deploy the service on local Kubernetes
 	$(info Deploying service locally...)
 	kubectl apply -R -f k8s/
 
