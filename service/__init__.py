@@ -1,3 +1,4 @@
+# pylint: disable=cyclic-import
 # Copyright 2016, 2024 John J. Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +21,9 @@ and SQL database
 """
 import sys
 from flask import Flask
+from flask_restx import Api
 from service import config
 from service.common import log_handlers
-from flask_restx import Api
 
 # Create Flask-RESTX API，for initializing Swagger documents
 api = Api(

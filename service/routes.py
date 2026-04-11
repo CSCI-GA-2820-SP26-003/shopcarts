@@ -586,7 +586,7 @@ class ItemResource(Resource):
     """RESTX resource for a single item within a shopcart"""
 
     @shopcart_ns.marshal_with(item_model)
-    def get(self, shopcart_id, item_id):
+    def get(self, _shopcart_id, item_id):
         """Retrieve an item from a shopcart"""
         item = Item.find(item_id)
         if not item:
@@ -595,7 +595,7 @@ class ItemResource(Resource):
 
     @shopcart_ns.expect(item_create_model, validate=True)
     @shopcart_ns.marshal_with(item_model)
-    def put(self, shopcart_id, item_id):
+    def put(self, _shopcart_id, item_id):
         """Update an item in a shopcart"""
         item = Item.find(item_id)
         if not item:
