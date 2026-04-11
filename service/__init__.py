@@ -22,7 +22,15 @@ import sys
 from flask import Flask
 from service import config
 from service.common import log_handlers
+from flask_restx import Api
 
+# Create Flask-RESTX API，for initializing Swagger documents
+api = Api(
+    title="Shopcarts REST API Service",
+    version="1.0",
+    description="API for managing shopcarts and items",
+    doc="/apidocs",  # document path
+)
 
 ############################################################
 # Initialize the Flask instance
@@ -38,6 +46,10 @@ def create_app():
     from service.models import db
 
     db.init_app(app)
+
+    
+    api.init_app(app)
+    # Integrating Flask-RESTX with a Flask application
 
     with app.app_context():
         # Dependencies require we import the routes AFTER the Flask app is created
