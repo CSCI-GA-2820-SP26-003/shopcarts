@@ -617,7 +617,6 @@ class ItemResource(Resource):
             return {
                 "error": "Not Found", "message": f"Item with id '{item_id}' was not found in shopcart '{shopcart_id}'"
                 }, status.HTTP_404_NOT_FOUND
-        
+
         item.delete()
         return "", status.HTTP_204_NO_CONTENT
-
