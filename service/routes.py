@@ -87,6 +87,8 @@ item_create_model = shopcart_ns.model(
 ######################################################################
 # ADMIN UI
 ######################################################################
+
+
 @app.route("/admin")
 def admin():
     """Admin UI for managing shopcarts"""
@@ -451,8 +453,9 @@ def check_content_type(content_type):
 ######################################################################
 #  RESTX Resource
 ######################################################################
-# /shopcarts GET and POST
 
+
+# /shopcarts GET and POST
 @shopcart_ns.route("")
 class ShopcartCollection(Resource):
     """RESTX resource for shopcart collection"""
@@ -614,6 +617,7 @@ class ItemResource(Resource):
             return {
                 "error": "Not Found", "message": f"Item with id '{item_id}' was not found in shopcart '{shopcart_id}'"
                 }, status.HTTP_404_NOT_FOUND
+        
         item.delete()
         return "", status.HTTP_204_NO_CONTENT
 
