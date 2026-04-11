@@ -452,6 +452,7 @@ def check_content_type(content_type):
 #  RESTX Resource
 ######################################################################
 # /shopcarts GET and POST
+
 @shopcart_ns.route("")
 class ShopcartCollection(Resource):
     """RESTX resource for shopcart collection"""
@@ -483,7 +484,7 @@ class ShopcartCollection(Resource):
         cart.create()
         location_url = url_for("shopcarts_shopcartresource", shopcart_id=cart.id, _external=True)
         return cart.serialize(), status.HTTP_201_CREATED, {"Location": location_url}
-    
+
 
 # /shopcarts/<int:shopcart_id>  GET/PUT/DELETE
 @shopcart_ns.route("/<int:shopcart_id>")
@@ -521,6 +522,7 @@ class ShopcartResource(Resource):
                 }, status.HTTP_404_NOT_FOUND
         cart.delete()
         return "", status.HTTP_204_NO_CONTENT
+
 
 # /shopcarts/<shopcart_id>/checkout
 @shopcart_ns.route("/<int:shopcart_id>/checkout")
@@ -609,6 +611,9 @@ class ItemResource(Resource):
                 }, status.HTTP_404_NOT_FOUND
         item = Item.find(item_id)
         if (not item) or (item.shopcart_id != shopcart_id):
-            return {"error": "Not Found", "message": f"Item with id '{item_id}' was not found in shopcart '{shopcart_id}'"}, status.HTTP_404_NOT_FOUND
+            return {
+                "error": "Not Found", "message": f"Item with id '{item_id}' was not found in shopcart '{shopcart_id}'"
+                }, status.HTTP_404_NOT_FOUND
         item.delete()
         return "", status.HTTP_204_NO_CONTENT
+

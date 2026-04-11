@@ -35,6 +35,8 @@ api = Api(
 ############################################################
 # Initialize the Flask instance
 ############################################################
+
+
 def create_app():
     """Initialize the core application."""
     # Create Flask application
@@ -47,7 +49,6 @@ def create_app():
 
     db.init_app(app)
 
-    
     api.init_app(app)
     # Integrating Flask-RESTX with a Flask application
 
