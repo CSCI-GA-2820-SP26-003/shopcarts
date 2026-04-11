@@ -451,7 +451,7 @@ def check_content_type(content_type):
 ######################################################################
 #  RESTX Resource
 ######################################################################
-#/shopcarts GET and POST
+# /shopcarts GET and POST
 @shopcart_ns.route("")
 class ShopcartCollection(Resource):
     """RESTX resource for shopcart collection"""
@@ -516,7 +516,9 @@ class ShopcartResource(Resource):
         """Delete a shopcart"""
         cart = Shopcart.find(shopcart_id)
         if not cart:
-            return {"error": "Not Found", "message": f"Shopcart with id '{shopcart_id}' was not found"}, status.HTTP_404_NOT_FOUND
+            return {
+                "error": "Not Found", "message": f"Shopcart with id '{shopcart_id}' was not found"
+                }, status.HTTP_404_NOT_FOUND
         cart.delete()
         return "", status.HTTP_204_NO_CONTENT
 
@@ -602,7 +604,9 @@ class ItemResource(Resource):
         """Delete an item from a shopcart"""
         shopcart = Shopcart.find(shopcart_id)
         if not shopcart:
-            return {"error": "Not Found", "message": f"Shopcart with id '{shopcart_id}' was not found"}, status.HTTP_404_NOT_FOUND
+            return {
+                "error": "Not Found", "message": f"Shopcart with id '{shopcart_id}' was not found"
+                }, status.HTTP_404_NOT_FOUND
         item = Item.find(item_id)
         if (not item) or (item.shopcart_id != shopcart_id):
             return {"error": "Not Found", "message": f"Item with id '{item_id}' was not found in shopcart '{shopcart_id}'"}, status.HTTP_404_NOT_FOUND
