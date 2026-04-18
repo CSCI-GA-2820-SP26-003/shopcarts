@@ -66,7 +66,76 @@ def health():
 ######################################################################
 @app.route("/shopcarts", methods=["GET"])
 def list_shopcarts():
-    """Returns all of the Shopcarts, optionally filtered by status"""
+    """
+    Retrieve a list of all shopcarts.
+
+    This endpoint returns all of the Shopcarts in the service, optionally filtered
+    by the cart's status. If a `status` query parameter is provided, only
+    shopcarts matching that status will be returned.
+
+    ---
+    tags:
+      - Shopcarts
+    summary: List all shopcarts
+    parameters:
+      - in: query
+        name: status
+        description: Filter shopcarts by status (active, abandoned, or checked_out)
+        required: false
+        schema:
+          type: string
+          enum:
+            - active
+            - abandoned
+            - checked_out
+    responses:
+      200:
+        description: Successful response returns a list of shopcart objects
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/Shopcart'
+      400:
+        description: Invalid status value provided
+
+    definitions:
+      Shopcart:
+        type: object
+        properties:
+          id:
+            type: integer
+          name:
+            type: string
+          userid:
+            type: string
+          active:
+            type: boolean
+          status:
+            type: string
+          items:
+            type: array
+            items:
+              $ref: '#/definitions/Item'
+          total_price:
+            type: number
+      Item:
+        type: object
+        properties:
+          id:
+            type: integer
+          shopcart_id:
+            type: integer
+          product_id:
+            type: string
+          name:
+            type: string
+          quantity:
+            type: integer
+          price:
+            type: number
+    """
     app.logger.info("Request for Shopcart list")
 
     status_param = request.args.get("status")
@@ -92,7 +161,32 @@ def list_shopcarts():
 ######################################################################
 @app.route("/shopcarts/<int:shopcart_id>/items", methods=["GET"])
 def list_items(shopcart_id):
-    """Returns all of the items for an Shopcart"""
+    """
+    Retrieve all items belonging to a specific shopcart.
+
+    ---
+    tags:
+      - Items
+    summary: List items in a shopcart
+    parameters:
+      - in: path
+        name: shopcart_id
+        required: true
+        schema:
+          type: integer
+        description: ID of the shopcart to fetch items for
+    responses:
+      200:
+        description: A list of item objects
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/Item'
+      404:
+        description: Shopcart not found
+    """
     app.logger.info("Request for all items for Shopcart with id: %s", shopcart_id)
 
     # See if the shopcart exists and abort if it doesn't
@@ -115,9 +209,28 @@ def list_items(shopcart_id):
 @app.route("/shopcarts/<int:shopcart_id>", methods=["GET"])
 def get_shopcarts(shopcart_id):
     """
-    Retrieve a single Shopcart
+    Retrieve a single shopcart by its ID.
 
-    This endpoint will return a Shopcart based on its id
+    ---
+    tags:
+      - Shopcarts
+    summary: Get a shopcart by ID
+    parameters:
+      - in: path
+        name: shopcart_id
+        required: true
+        schema:
+          type: integer
+        description: ID of the shopcart
+    responses:
+      200:
+        description: Shopcart retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Shopcart'
+      404:
+        description: Shopcart not found
     """
     app.logger.info("Request to Retrieve a shopcart with id [%s]", shopcart_id)
 
@@ -138,8 +251,39 @@ def get_shopcarts(shopcart_id):
 @app.route("/shopcarts", methods=["POST"])
 def create_shopcart():
     """
-    Creates an Shopcart
-    This endpoint will create an Shopcart based the data in the body that is posted
+    Create a new shopcart.
+
+    This endpoint accepts a JSON body representing a new shopcart and adds it
+    to the data store.  The required fields are `name`, and optional fields
+    include `userid`, `active`, and `status`.
+
+    ---
+    tags:
+      - Shopcarts
+    summary: Create a shopcart
+    parameters:
+      - in: body
+        name: body
+        required: true
+        description: Shopcart object that needs to be created
+        schema:
+          $ref: '#/definitions/Shopcart'
+    responses:
+      201:
+        description: Shopcart created successfully
+        headers:
+          Location:
+            description: URL of the newly created shopcart
+            schema:
+              type: string
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Shopcart'
+      400:
+        description: Invalid shopcart data provided
+      415:
+        description: Unsupported Media Type – Content-Type must be application/json
     """
     app.logger.info("Request to create a Shopcart")
     check_content_type("application/json")
@@ -162,9 +306,39 @@ def create_shopcart():
 @app.route("/shopcarts/<int:shopcart_id>", methods=["PUT"])
 def update_shopcarts(shopcart_id):
     """
-    Update an shopcart
+    Update an existing shopcart.
 
-    This endpoint will update an Account based the body that is posted
+    This endpoint updates the shopcart identified by `shopcart_id` with the
+    JSON payload provided in the request body.
+
+    ---
+    tags:
+      - Shopcarts
+    summary: Update a shopcart
+    parameters:
+      - in: path
+        name: shopcart_id
+        required: true
+        schema:
+          type: integer
+        description: ID of the shopcart to update
+      - in: body
+        name: body
+        required: true
+        description: Shopcart object with updated values
+        schema:
+          $ref: '#/definitions/Shopcart'
+    responses:
+      200:
+        description: Shopcart updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Shopcart'
+      404:
+        description: Shopcart not found
+      415:
+        description: Unsupported Media Type – Content-Type must be application/json
     """
     app.logger.info("Request to update shopcart with id: %s", shopcart_id)
     check_content_type("application/json")
@@ -190,10 +364,33 @@ def update_shopcarts(shopcart_id):
 @app.route("/shopcarts/<int:shopcart_id>/checkout", methods=["PUT"])
 def checkout_shopcart(shopcart_id):
     """
-    Checkout a Shopcart
+    Checkout a shopcart.
 
-    This endpoint transitions a cart's status to 'checked_out'.
-    Returns 409 if the cart is already checked out.
+    Transitions the status of the shopcart to `checked_out`.  If the cart
+    is already checked out, this endpoint returns a 409 Conflict.
+
+    ---
+    tags:
+      - Shopcarts
+    summary: Checkout a shopcart
+    parameters:
+      - in: path
+        name: shopcart_id
+        required: true
+        schema:
+          type: integer
+        description: ID of the shopcart to checkout
+    responses:
+      200:
+        description: Shopcart checked out successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Shopcart'
+      404:
+        description: Shopcart not found
+      409:
+        description: Shopcart is already checked out
     """
     app.logger.info("Request to checkout shopcart with id: %s", shopcart_id)
 
@@ -221,7 +418,26 @@ def checkout_shopcart(shopcart_id):
 #######################################################################
 @app.route("/shopcarts/<int:shopcart_id>", methods=["DELETE"])
 def delete_shopcart(shopcart_id):
-    """Deletes a Shopcart"""
+    """
+    Delete a shopcart.
+
+    ---
+    tags:
+      - Shopcarts
+    summary: Delete a shopcart
+    parameters:
+      - in: path
+        name: shopcart_id
+        required: true
+        schema:
+          type: integer
+        description: ID of the shopcart to delete
+    responses:
+      204:
+        description: Shopcart deleted successfully
+      404:
+        description: Shopcart not found
+    """
     app.logger.info("Request to delete shopcart with id=%s", shopcart_id)
 
     cart = Shopcart.find(shopcart_id)
@@ -244,9 +460,44 @@ def delete_shopcart(shopcart_id):
 @app.route("/shopcarts/<int:shopcart_id>/items", methods=["POST"])
 def create_items(shopcart_id):
     """
-    Create an Item on an Shopcart
+    Create a new item in a specific shopcart.
 
-    This endpoint will add an item to an shopcart
+    Adds an item to the shopcart identified by `shopcart_id` using the
+    JSON payload provided in the request body.
+
+    ---
+    tags:
+      - Items
+    summary: Create an item
+    parameters:
+      - in: path
+        name: shopcart_id
+        required: true
+        schema:
+          type: integer
+        description: ID of the shopcart to add the item to
+      - in: body
+        name: body
+        required: true
+        description: Item object to add to the shopcart
+        schema:
+          $ref: '#/definitions/Item'
+    responses:
+      201:
+        description: Item created successfully
+        headers:
+          Location:
+            description: URL of the newly created item
+            schema:
+              type: string
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Item'
+      404:
+        description: Shopcart not found
+      415:
+        description: Unsupported Media Type – Content-Type must be application/json
     """
     app.logger.info("Request to create an Item for Shopcart with id: %s", shopcart_id)
     check_content_type("application/json")
@@ -283,9 +534,34 @@ def create_items(shopcart_id):
 @app.route("/shopcarts/<int:shopcart_id>/items/<int:item_id>", methods=["GET"])
 def get_items(shopcart_id, item_id):
     """
-    Get an Item
+    Retrieve a single item from a shopcart.
 
-    This endpoint returns just an item
+    ---
+    tags:
+      - Items
+    summary: Get an item by ID
+    parameters:
+      - in: path
+        name: shopcart_id
+        required: true
+        schema:
+          type: integer
+        description: ID of the shopcart
+      - in: path
+        name: item_id
+        required: true
+        schema:
+          type: integer
+        description: ID of the item to retrieve
+    responses:
+      200:
+        description: Item retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Item'
+      404:
+        description: Item or shopcart not found
     """
     app.logger.info(
         "Request to retrieve Item %s for Shopcart id: %s", (item_id, shopcart_id)
@@ -308,9 +584,45 @@ def get_items(shopcart_id, item_id):
 @app.route("/shopcarts/<int:shopcart_id>/items/<int:item_id>", methods=["PUT"])
 def update_items(shopcart_id, item_id):
     """
-    Update an Item
+    Update an existing item.
 
-    This endpoint will update an Item based the body that is posted
+    This endpoint updates the item identified by `item_id` within the given
+    shopcart using the JSON payload provided in the request body.
+
+    ---
+    tags:
+      - Items
+    summary: Update an item
+    parameters:
+      - in: path
+        name: shopcart_id
+        required: true
+        schema:
+          type: integer
+        description: ID of the shopcart
+      - in: path
+        name: item_id
+        required: true
+        schema:
+          type: integer
+        description: ID of the item to update
+      - in: body
+        name: body
+        required: true
+        description: Item object with updated values
+        schema:
+          $ref: '#/definitions/Item'
+    responses:
+      200:
+        description: Item updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Item'
+      404:
+        description: Item not found
+      415:
+        description: Unsupported Media Type – Content-Type must be application/json
     """
     app.logger.info(
         "Request to update Item %s for Shopcart id: %s", (item_id, shopcart_id)
@@ -338,7 +650,32 @@ def update_items(shopcart_id, item_id):
 ######################################################################
 @app.route("/shopcarts/<int:shopcart_id>/items/<int:item_id>", methods=["DELETE"])
 def delete_items(shopcart_id, item_id):
-    """Deletes an Item from a Shopcart"""
+    """
+    Delete an item from a shopcart.
+
+    ---
+    tags:
+      - Items
+    summary: Delete an item
+    parameters:
+      - in: path
+        name: shopcart_id
+        required: true
+        schema:
+          type: integer
+        description: ID of the shopcart
+      - in: path
+        name: item_id
+        required: true
+        schema:
+          type: integer
+        description: ID of the item to delete
+    responses:
+      204:
+        description: Item deleted successfully
+      404:
+        description: Item or shopcart not found
+    """
     app.logger.info(
         "Request to delete Item %s for Shopcart id: %s", item_id, shopcart_id
     )
