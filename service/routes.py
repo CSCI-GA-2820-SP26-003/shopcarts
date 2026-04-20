@@ -23,13 +23,72 @@ and Delete Shopcart
 
 from flask import jsonify, request, url_for, abort
 from flask import current_app as app  # Import Flask application
+from flask_restx import Namespace, Resource, fields
+from service import api
 from service.models import Shopcart, Item, CartStatus
 from service.common import status  # HTTP Status Codes
 
+######################################################################
+# RESTX Swagger
+######################################################################
+# RESTX namespace and models
+shopcart_ns = Namespace("shopcarts", description="Shopcart operations")
+api.add_namespace(shopcart_ns, path="/shopcarts")
+
+# Item data model
+item_model = shopcart_ns.model(
+    "Item",
+    {
+        "id": fields.Integer(readOnly=True, description="Item ID"),
+        "shopcart_id": fields.Integer(readOnly=True, description="Parent Shopcart ID"),
+        "product_id": fields.String(required=True, description="Product ID"),
+        "name": fields.String(required=True, description="Item name"),
+        "quantity": fields.Integer(required=False, description="Quantity"),
+        "price": fields.Float(required=True, description="Item price"),
+    },
+)
+
+# Shopcart model(including items）
+shopcart_model = shopcart_ns.model(
+    "Shopcart",
+    {
+        "id": fields.Integer(readOnly=True, description="Shopcart ID"),
+        "name": fields.String(required=True, description="Shopcart name"),
+        "userid": fields.String(required=False, description="User ID"),
+        "active": fields.Boolean(required=False, description="Active flag"),
+        "status": fields.String(required=False, description="Status"),
+        "items": fields.List(fields.Nested(item_model), readOnly=True),
+        "total_price": fields.Float(readOnly=True, description="Total price"),
+    },
+)
+
+# Shopcart model when initialing(no id and items
+shopcart_create_model = shopcart_ns.model(
+    "ShopcartCreate",
+    {
+        "name": fields.String(required=True, description="Name of the shopcart"),
+        "userid": fields.String(required=False, description="User ID"),
+        "active": fields.Boolean(required=False, description="Active flag"),
+        "status": fields.String(required=False, description="Status"),
+    },
+)
+
+# Item model when initialing and updating
+item_create_model = shopcart_ns.model(
+    "ItemCreate",
+    {
+        "product_id": fields.String(required=True, description="Product ID"),
+        "name": fields.String(required=True, description="Item name"),
+        "quantity": fields.Integer(required=False, description="Quantity"),
+        "price": fields.Float(required=True, description="Price"),
+    },
+)
 
 ######################################################################
 # ADMIN UI
 ######################################################################
+
+
 @app.route("/admin")
 def admin():
     """Admin UI for managing shopcarts"""
@@ -727,3 +786,174 @@ def check_content_type(content_type):
     abort(
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, f"Content-Type must be {content_type}"
     )
+
+######################################################################
+#  RESTX Resource
+######################################################################
+
+
+# /shopcarts GET and POST
+@shopcart_ns.route("")
+class ShopcartCollection(Resource):
+    """RESTX resource for shopcart collection"""
+
+    @shopcart_ns.marshal_list_with(shopcart_model)
+    @shopcart_ns.param("status", "Filter by cart status")
+    def get(self):
+        """List all shopcarts (optionally filtered by status)"""
+        status_param = request.args.get("status")
+        if status_param:
+            try:
+                cart_status = CartStatus(status_param)
+            except ValueError:
+                abort(
+                    status.HTTP_400_BAD_REQUEST,
+                    f"Invalid status '{status_param}'. Valid values are: " + ", ".join(s.value for s in CartStatus),
+                )
+            shopcarts = Shopcart.find_by_status(cart_status)
+        else:
+            shopcarts = Shopcart.all()
+        return [cart.serialize() for cart in shopcarts], status.HTTP_200_OK
+
+    @shopcart_ns.expect(shopcart_create_model, validate=True)
+    @shopcart_ns.marshal_with(shopcart_model, code=status.HTTP_201_CREATED)
+    def post(self):
+        """Create a new shopcart"""
+        cart = Shopcart()
+        cart.deserialize(request.get_json())
+        cart.create()
+        location_url = url_for("shopcarts_shopcartresource", shopcart_id=cart.id, _external=True)
+        return cart.serialize(), status.HTTP_201_CREATED, {"Location": location_url}
+
+
+# /shopcarts/<int:shopcart_id>  GET/PUT/DELETE
+@shopcart_ns.route("/<int:shopcart_id>")
+@shopcart_ns.response(404, "Shopcart not found")
+@shopcart_ns.param("shopcart_id", "The shopcart identifier")
+class ShopcartResource(Resource):
+    """RESTX resource for a single shopcart"""
+
+    @shopcart_ns.marshal_with(shopcart_model)
+    def get(self, shopcart_id):
+        """Retrieve a shopcart by ID"""
+        cart = Shopcart.find(shopcart_id)
+        if not cart:
+            abort(status.HTTP_404_NOT_FOUND, f"Shopcart with id '{shopcart_id}' was not found.")
+        return cart.serialize(), status.HTTP_200_OK
+
+    @shopcart_ns.expect(shopcart_create_model, validate=True)
+    @shopcart_ns.marshal_with(shopcart_model)
+    def put(self, shopcart_id):
+        """Update a shopcart"""
+        cart = Shopcart.find(shopcart_id)
+        if not cart:
+            abort(status.HTTP_404_NOT_FOUND, f"Shopcart with id '{shopcart_id}' was not found.")
+        cart.deserialize(request.get_json())
+        cart.id = shopcart_id
+        cart.update()
+        return cart.serialize(), status.HTTP_200_OK
+
+    def delete(self, shopcart_id):
+        """Delete a shopcart"""
+        cart = Shopcart.find(shopcart_id)
+        if not cart:
+            return {
+                "error": "Not Found", "message": f"Shopcart with id '{shopcart_id}' was not found"
+                }, status.HTTP_404_NOT_FOUND
+        cart.delete()
+        return "", status.HTTP_204_NO_CONTENT
+
+
+# /shopcarts/<shopcart_id>/checkout
+@shopcart_ns.route("/<int:shopcart_id>/checkout")
+@shopcart_ns.response(404, "Shopcart not found")
+@shopcart_ns.response(409, "Shopcart already checked out")
+class CheckoutResource(Resource):
+    """RESTX resource for checking out a shopcart"""
+
+    @shopcart_ns.marshal_with(shopcart_model)
+    def put(self, shopcart_id):
+        """Check out a shopcart"""
+        shopcart = Shopcart.find(shopcart_id)
+        if not shopcart:
+            abort(status.HTTP_404_NOT_FOUND, f"Shopcart with id '{shopcart_id}' was not found.")
+        if shopcart.status == CartStatus.CHECKED_OUT:
+            abort(status.HTTP_409_CONFLICT, f"Shopcart with id '{shopcart_id}' is already checked out.")
+        shopcart.status = CartStatus.CHECKED_OUT
+        shopcart.update()
+        return shopcart.serialize(), status.HTTP_200_OK
+
+
+# /shopcarts/<shopcart_id>/items
+@shopcart_ns.route("/<int:shopcart_id>/items")
+@shopcart_ns.param("shopcart_id", "The shopcart identifier")
+class ItemCollection(Resource):
+    """RESTX resource for item collection within a shopcart"""
+
+    @shopcart_ns.marshal_list_with(item_model)
+    def get(self, shopcart_id):
+        """List all items of a shopcart"""
+        shopcart = Shopcart.find(shopcart_id)
+        if not shopcart:
+            abort(status.HTTP_404_NOT_FOUND, f"Shopcart with id '{shopcart_id}' could not be found.")
+        results = [item.serialize() for item in shopcart.items]
+        return results, status.HTTP_200_OK
+
+    @shopcart_ns.expect(item_create_model, validate=True)
+    @shopcart_ns.marshal_with(item_model, code=status.HTTP_201_CREATED)
+    def post(self, shopcart_id):
+        """Create an item in a shopcart"""
+        shopcart = Shopcart.find(shopcart_id)
+        if not shopcart:
+            abort(status.HTTP_404_NOT_FOUND, f"Shopcart with id '{shopcart_id}' could not be found.")
+        item = Item()
+        item.deserialize(request.get_json())
+        shopcart.items.append(item)
+        shopcart.update()
+        # keep
+        location_url = url_for("get_items", shopcart_id=shopcart.id, item_id=item.id, _external=True)
+        return item.serialize(), status.HTTP_201_CREATED, {"Location": location_url}
+
+
+# /shopcarts/<shopcart_id>/items/<item_id>
+@shopcart_ns.route("/<int:shopcart_id>/items/<int:item_id>")
+@shopcart_ns.param("shopcart_id", "The shopcart identifier")
+@shopcart_ns.param("item_id", "The item identifier")
+class ItemResource(Resource):
+    """RESTX resource for a single item within a shopcart"""
+
+    @shopcart_ns.marshal_with(item_model)
+    def get(self, _shopcart_id, item_id):
+        """Retrieve an item from a shopcart"""
+        item = Item.find(item_id)
+        if not item:
+            abort(status.HTTP_404_NOT_FOUND, f"Item with id '{item_id}' could not be found.")
+        return item.serialize(), status.HTTP_200_OK
+
+    @shopcart_ns.expect(item_create_model, validate=True)
+    @shopcart_ns.marshal_with(item_model)
+    def put(self, _shopcart_id, item_id):
+        """Update an item in a shopcart"""
+        item = Item.find(item_id)
+        if not item:
+            abort(status.HTTP_404_NOT_FOUND, f"Item with id '{item_id}' could not be found.")
+        item.deserialize(request.get_json())
+        item.id = item_id
+        item.update()
+        return item.serialize(), status.HTTP_200_OK
+
+    def delete(self, shopcart_id, item_id):
+        """Delete an item from a shopcart"""
+        shopcart = Shopcart.find(shopcart_id)
+        if not shopcart:
+            return {
+                "error": "Not Found", "message": f"Shopcart with id '{shopcart_id}' was not found"
+                }, status.HTTP_404_NOT_FOUND
+        item = Item.find(item_id)
+        if (not item) or (item.shopcart_id != shopcart_id):
+            return {
+                "error": "Not Found", "message": f"Item with id '{item_id}' was not found in shopcart '{shopcart_id}'"
+                }, status.HTTP_404_NOT_FOUND
+
+        item.delete()
+        return "", status.HTTP_204_NO_CONTENT
