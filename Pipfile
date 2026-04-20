@@ -11,6 +11,9 @@ retry2 = "==0.9.5"
 python-dotenv = "~=1.2.1"
 gunicorn = "~=25.0.0"
 
+# Swagger/OpenAPI support
+flasgger = "~=0.9.7"
+
 [dev-packages]
 # Code Quality
 pylint = "~=4.0.4"
