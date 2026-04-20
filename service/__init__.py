@@ -22,6 +22,14 @@ and SQL database
 import sys
 from flask import Flask
 from flask_restx import Api
+# Enable Swagger/OpenAPI support using Flasgger
+try:
+    # Import Swagger lazily; this lets the service run even if the optional dependency
+    # isn't installed in certain environments. When flasgger is available, it will
+    # automatically register a Swagger UI at `/apidocs`.
+    from flasgger import Swagger  # type: ignore
+except ImportError:
+    Swagger = None  # type: ignore
 from service import config
 from service.common import log_handlers
 
@@ -43,6 +51,20 @@ def create_app():
     # Create Flask application
     app = Flask(__name__)
     app.config.from_object(config)
+
+    # Configure Swagger UI if the flasgger dependency is available.  The SWAGGER
+    # configuration defines the page title and UI version.  If Swagger is not
+    # installed, the service will still run normally without exposing an API
+    # documentation endpoint.
+    app.config.setdefault(
+        "SWAGGER",
+        {
+            "title": "Shopcarts REST API",
+            "uiversion": 3,
+        },
+    )
+    if Swagger:
+        Swagger(app)
 
     # Initialize Plugins
     # pylint: disable=import-outside-toplevel
