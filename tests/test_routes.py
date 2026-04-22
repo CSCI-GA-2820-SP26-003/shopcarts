@@ -400,6 +400,8 @@ class TestShopcartService(TestCase):
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        data = resp.get_json()
+        self.assertIn("Shopcart", data["message"])
 
     def test_create_item_shopcart_not_found(self):
         """It should return 404 when adding an item to a non-existent shopcart"""
@@ -420,12 +422,39 @@ class TestShopcartService(TestCase):
         )
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_get_item_wrong_shopcart(self):
+        """It should return 404 when the item belongs to a different shopcart"""
+        shopcart_one = self._create_shopcarts(1)[0]
+        shopcart_two = self._create_shopcarts(1)[0]
+        item = ItemFactory(shopcart_id=shopcart_one.id)
+        item.create()
+
+        resp = self.client.get(
+            f"{BASE_URL}/{shopcart_two.id}/items/{item.id}",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_update_item_not_found(self):
         """It should return 404 when updating a non-existent item"""
         shopcart = self._create_shopcarts(1)[0]
         resp = self.client.put(
             f"{BASE_URL}/{shopcart.id}/items/999999",
             json={"product_id": "p1", "name": "Item", "quantity": 1, "price": 9.99},
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_item_wrong_shopcart(self):
+        """It should return 404 when updating an item in the wrong shopcart"""
+        shopcart_one = self._create_shopcarts(1)[0]
+        shopcart_two = self._create_shopcarts(1)[0]
+        item = ItemFactory(shopcart_id=shopcart_one.id)
+        item.create()
+
+        resp = self.client.put(
+            f"{BASE_URL}/{shopcart_two.id}/items/{item.id}",
+            json=item.serialize(),
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
@@ -450,6 +479,25 @@ class TestShopcartService(TestCase):
     def test_bad_request_from_invalid_data(self):
         """It should return 400 when request data is invalid"""
         resp = self.client.post(BASE_URL, json={}, content_type="application/json")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_shopcart_invalid_status(self):
+        """It should return 400 when creating a shopcart with an invalid status"""
+        resp = self.client.post(
+            BASE_URL,
+            json={"name": "BrokenCart", "status": "nope"},
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_shopcart_invalid_status(self):
+        """It should return 400 when updating a shopcart with an invalid status"""
+        shopcart = self._create_shopcarts(1)[0]
+        resp = self.client.put(
+            f"{BASE_URL}/{shopcart.id}",
+            json={"name": shopcart.name, "userid": shopcart.userid, "status": "nope"},
+            content_type="application/json",
+        )
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
     ######################################################################
