@@ -1,0 +1,117 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: lint
+  labels:
+    app: shopcarts
+spec:
+  workspaces:
+    - name: source
+      description: The workspace containing the source code
+  steps:
+    - name: flake8
+      image: python:3.12-slim
+      workingDir: $(workspaces.source.path)
+      command:
+        - bash
+        - -c
+        - |
+          pip install --quiet flake8
+          flake8 service tests --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: pytest
+  labels:
+    app: shopcarts
+spec:
+  workspaces:
+    - name: source
+      description: The workspace containing the source code
+  params:
+    - name: DATABASE_URI
+      description: Database connection string
+      type: string
+      default: "sqlite:///test.db"
+  steps:
+    - name: pytest
+      image: python:3.12-slim
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: DATABASE_URI
+          value: $(params.DATABASE_URI)
+        - name: RETRY_COUNT
+          value: "1"
+      command:
+        - bash
+        - -c
+        - |
+          pip install --quiet pipenv
+          pipenv install --system --dev
+          pytest --pspec --cov=service --cov-fail-under=95 --disable-warnings
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: buildah
+  labels:
+    app: shopcarts
+spec:
+  workspaces:
+    - name: source
+      description: The workspace containing the source code
+  params:
+    - name: IMAGE_NAME
+      description: The fully qualified image name
+      type: string
+      default: "image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/shopcarts:latest"
+  steps:
+    - name: build-and-push
+      image: quay.io/buildah/stable:latest
+      workingDir: $(workspaces.source.path)
+      securityContext:
+        privileged: true
+      command:
+        - bash
+        - -c
+        - |
+          buildah bud --format=docker -t $(params.IMAGE_NAME) .
+          buildah push --tls-verify=false $(params.IMAGE_NAME)
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: deploy-image
+  labels:
+    app: shopcarts
+spec:
+  workspaces:
+    - name: source
+      description: The workspace containing the source code
+  params:
+    - name: IMAGE_NAME
+      description: The fully qualified image name
+      type: string
+      default: "image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/shopcarts:latest"
+  steps:
+    - name: deploy
+      image: quay.io/openshift/origin-cli:latest
+      workingDir: $(workspaces.source.path)
+      command:
+        - bash
+        - -c
+        - |
+          # Apply Kubernetes manifests
+          oc apply -f k8s/
+
+          # Update the deployment image
+          oc set image deployment/shopcarts shopcarts=$(params.IMAGE_NAME)
+
+          # Wait for rollout to complete
+          oc rollout status deployment/shopcarts --timeout=120s
