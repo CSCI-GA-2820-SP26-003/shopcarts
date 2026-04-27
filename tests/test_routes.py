@@ -413,6 +413,14 @@ class TestShopcartService(TestCase):
         )
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_get_item_shopcart_not_found(self):
+        """It should return 404 when getting an item from a non-existent shopcart"""
+        resp = self.client.get(
+            f"{BASE_URL}/999999/items/1",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_get_item_not_found(self):
         """It should return 404 when getting a non-existent item"""
         shopcart = self._create_shopcarts(1)[0]
@@ -431,6 +439,15 @@ class TestShopcartService(TestCase):
 
         resp = self.client.get(
             f"{BASE_URL}/{shopcart_two.id}/items/{item.id}",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_item_shopcart_not_found(self):
+        """It should return 404 when updating an item in a non-existent shopcart"""
+        resp = self.client.put(
+            f"{BASE_URL}/999999/items/1",
+            json={"product_id": "p1", "name": "Item", "quantity": 1, "price": 9.99},
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
