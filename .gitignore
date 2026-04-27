@@ -102,3 +102,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+#.claude folder
+.claude/
+DevOps-Homework-2-003.pdf
+swaggeropenapi.txt

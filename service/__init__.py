@@ -72,14 +72,15 @@ def create_app():
 
     db.init_app(app)
 
-    api.init_app(app)
-    # Integrating Flask-RESTX with a Flask application
-
     with app.app_context():
         # Dependencies require we import the routes AFTER the Flask app is created
         # pylint: disable=wrong-import-position, wrong-import-order, unused-import
         from service import routes, models  # noqa: F401 E402
         from service.common import error_handlers, cli_commands  # noqa: F401, E402
+
+        # Initialize Flask-RESTX after routes so that @app.route("/") is not
+        # overridden by the Api object's default root handler
+        api.init_app(app)
 
         try:
             db.create_all()
