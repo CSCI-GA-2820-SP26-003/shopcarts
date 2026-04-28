@@ -4,12 +4,24 @@ metadata:
   name: cd-pipeline
 spec:
   params:
-    - description: The URL to the git repo
+    - default: 'https://github.com/CSCI-GA-2820-SP26-003/shopcarts.git'
+      description: The URL to the git repo
       name: GIT_REPO
       type: string
     - default: master
       description: The reference (branch or ref)
       name: GIT_REF
+      type: string
+    - description: The external OpenShift route URL for the deployed microservice
+      name: BASE_URL
+      type: string
+    - default: shopcarts
+      description: Name of app
+      name: APP_NAME
+      type: string
+    - default: 'image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(params.APP_NAME):latest'
+      description: Name of the image
+      name: IMAGE_NAME
       type: string
   tasks:
     - name: git-clone
@@ -55,6 +67,99 @@ spec:
         resolver: cluster
       workspaces:
         - name: output
+          workspace: pipeline-workspace
+    - name: lint
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: lint
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    - name: tests
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: unit-test
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    - name: bdd-tests
+      params:
+        - name: BASE_URL
+          value: $(params.BASE_URL)
+      runAfter:
+        - deploy
+      taskRef:
+        kind: Task
+        name: bdd-test
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    - name: buildah
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE_NAME)
+        - name: DOCKERFILE
+          value: ./Dockerfile
+        - name: BUILD_ARGS
+          value:
+            - ''
+        - name: CONTEXT
+          value: .
+        - name: STORAGE_DRIVER
+          value: vfs
+        - name: FORMAT
+          value: oci
+        - name: BUILD_EXTRA_ARGS
+          value: ''
+        - name: PUSH_EXTRA_ARGS
+          value: ''
+        - name: SKIP_PUSH
+          value: 'false'
+        - name: TLS_VERIFY
+          value: 'true'
+        - name: VERBOSE
+          value: 'false'
+      runAfter:
+        - tests
+        - lint
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: buildah
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    - name: deploy
+      runAfter:
+        - buildah
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: openshift-client
+          - name: namespace
+            value: openshift-pipelines
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f k8s/deployment.yaml
+            oc apply -f k8s/service.yaml
+            oc apply -f k8s/ingress.yaml
+            oc set image deployment/customers customers=$(params.IMAGE_NAME)
+            oc rollout status deployment/customers --timeout=300s
+      workspaces:
+        - name: manifest-dir
           workspace: pipeline-workspace
   workspaces:
     - name: pipeline-workspace
