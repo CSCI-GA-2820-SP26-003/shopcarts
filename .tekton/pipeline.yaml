@@ -68,24 +68,6 @@ spec:
       workspaces:
         - name: output
           workspace: pipeline-workspace
-    - name: lint
-      runAfter:
-        - git-clone
-      taskRef:
-        kind: Task
-        name: lint
-      workspaces:
-        - name: source
-          workspace: pipeline-workspace
-    - name: tests
-      runAfter:
-        - git-clone
-      taskRef:
-        kind: Task
-        name: unit-test
-      workspaces:
-        - name: source
-          workspace: pipeline-workspace
     - name: bdd-tests
       params:
         - name: BASE_URL
@@ -98,46 +80,9 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-workspace
+    - name: lint
+    - name: tests
     - name: buildah
-      params:
-        - name: IMAGE
-          value: $(params.IMAGE_NAME)
-        - name: DOCKERFILE
-          value: ./Dockerfile
-        - name: BUILD_ARGS
-          value:
-            - ''
-        - name: CONTEXT
-          value: .
-        - name: STORAGE_DRIVER
-          value: vfs
-        - name: FORMAT
-          value: oci
-        - name: BUILD_EXTRA_ARGS
-          value: ''
-        - name: PUSH_EXTRA_ARGS
-          value: ''
-        - name: SKIP_PUSH
-          value: 'false'
-        - name: TLS_VERIFY
-          value: 'true'
-        - name: VERBOSE
-          value: 'false'
-      runAfter:
-        - tests
-        - lint
-      taskRef:
-        params:
-          - name: kind
-            value: task
-          - name: name
-            value: buildah
-          - name: namespace
-            value: openshift-pipelines
-        resolver: cluster
-      workspaces:
-        - name: source
-          workspace: pipeline-workspace
     - name: deploy
       runAfter:
         - buildah
