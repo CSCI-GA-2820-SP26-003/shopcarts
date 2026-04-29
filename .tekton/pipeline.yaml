@@ -121,12 +121,29 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-workspace
+    # Run pytest with coverage enforcement
+    - name: pytest
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: pytest-env
+      params:
+        - name: pytest-args
+          value:
+            - "--cov=service"
+            - "--cov-fail-under=95"
+            - "--disable-warnings"
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
     - name: buildah
       params:
         - name: IMAGE_NAME
           value: 'image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/shopcarts:latest'
       runAfter:
         - pylint
+        - pytest
       taskRef:
         kind: Task
         name: buildah
