@@ -68,26 +68,18 @@ spec:
       workspaces:
         - name: output
           workspace: pipeline-workspace
-    - name: bdd-tests
-      params:
-        - name: BASE_URL
-          value: $(params.BASE_URL)
-      runAfter:
-        - deploy
-      taskRef:
-        kind: Task
-        name: bdd-test
-      workspaces:
-        - name: source
-          workspace: pipeline-workspace
-    - name: lint
-    - name: tests
-    - name: buildah
     - name: deploy
+      params:
+        - name: SCRIPT
+          value: |
+            oc apply -f k8s/deployment.yaml
+            oc apply -f k8s/service.yaml
+            oc apply -f k8s/ingress.yaml
+            oc set image deployment/$(params.APP_NAME) $(params.APP_NAME)=$(params.IMAGE_NAME)
+            oc rollout status deployment/$(params.APP_NAME) --timeout=300s
       runAfter:
-        - buildah
+        - pylint
       taskRef:
-        resolver: cluster
         params:
           - name: kind
             value: task
@@ -95,18 +87,39 @@ spec:
             value: openshift-client
           - name: namespace
             value: openshift-pipelines
-      params:
-        - name: SCRIPT
-          value: |
-            oc apply -f k8s/deployment.yaml
-            oc apply -f k8s/service.yaml
-            oc apply -f k8s/ingress.yaml
-            oc set image deployment/customers customers=$(params.IMAGE_NAME)
-            oc rollout status deployment/customers --timeout=300s
+        resolver: cluster
       workspaces:
         - name: manifest-dir
           workspace: pipeline-workspace
+    - name: bdd-tests
+      params:
+        - name: base-url
+          value: $(params.BASE_URL)
+      runAfter:
+        - deploy
+      taskRef:
+        kind: Task
+        name: behave
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    - name: pylint
+      params:
+        - name: image
+          value: 'quay.io/rofrano/python:3.12-slim'
+        - name: path
+          value: service
+        - name: args
+          value: []
+        - name: requirements-file
+          value: requirements.txt
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: pylint
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
   workspaces:
     - name: pipeline-workspace
-      optional: false
-  finally: []
