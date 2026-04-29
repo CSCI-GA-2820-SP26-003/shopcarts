@@ -12,7 +12,8 @@ spec:
       description: The reference (branch or ref)
       name: GIT_REF
       type: string
-    - description: The external OpenShift route URL for the deployed microservice
+    - default: 'https://shopcarts-venkatnikhil-dev.apps.rm2.thpm.p1.openshiftapps.com'
+      description: The external OpenShift route URL for the deployed microservice
       name: BASE_URL
       type: string
     - default: shopcarts
@@ -122,19 +123,18 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-workspace
-    # Run pytest with coverage enforcement
     - name: pytest
+      params:
+        - name: pytest-args
+          value:
+            - '--cov=service'
+            - '--cov-fail-under=95'
+            - '--disable-warnings'
       runAfter:
         - git-clone
       taskRef:
         kind: Task
         name: pytest-env
-      params:
-        - name: pytest-args
-          value:
-            - "--cov=service"
-            - "--cov-fail-under=95"
-            - "--disable-warnings"
       workspaces:
         - name: source
           workspace: pipeline-workspace
