@@ -350,4 +350,4 @@ spec:
         python -m pip install --user -r requirements.txt
 
         echo "***** Running Tests *****"
-        behave
+        behave --stop

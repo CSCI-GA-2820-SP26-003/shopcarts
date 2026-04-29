@@ -75,6 +75,7 @@ spec:
             oc apply -f k8s/deployment.yaml
             oc apply -f k8s/service.yaml
             oc apply -f k8s/ingress.yaml
+            oc apply --server-side --force-conflicts -f k8s/route.yaml
             oc set image deployment/$(params.APP_NAME) $(params.APP_NAME)=$(params.IMAGE_NAME)
             oc rollout status deployment/$(params.APP_NAME) --timeout=300s
       runAfter:
@@ -89,7 +90,7 @@ spec:
             value: openshift-pipelines
         resolver: cluster
       workspaces:
-        - name: manifest-dir
+        - name: manifest_dir
           workspace: pipeline-workspace
     - name: bdd-tests
       params:
