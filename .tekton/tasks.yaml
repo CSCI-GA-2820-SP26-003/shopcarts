@@ -62,9 +62,9 @@ spec:
         python -m pip install pylint
 
         echo "***** Running Linting *****"
-        pylint $@ "$(params.path)"
+        pylint "$@" "$(params.path)"
       args:
-        - "$(params.args)"
+        - "$(params.args[*])"
 
 ---
 apiVersion: tekton.dev/v1beta1
@@ -95,13 +95,13 @@ spec:
       type: array
       default: []
     - name: secret-name
-      description: The name of the secret containing a database_uri key
+      description: The name of the secret containing the database URI
       type: string
       default: "postgres-creds"
     - name: secret-key
       description: The name of the key that contains the database uri
       type: string
-      default: "database_uri"
+      default: "DATABASE_URI"
   steps:
     - name: pytest
       image: quay.io/rofrano/python:3.12-slim
@@ -136,9 +136,9 @@ spec:
 
         echo "***** Running Tests *****"
         pytest --version
-        pytest
+        pytest "$@"
       args:
-        - "$(params.pytest-args)"
+        - "$(params.pytest-args[*])"
 
 ---
 apiVersion: tekton.dev/v1beta1
@@ -171,13 +171,29 @@ spec:
       image: quay.io/buildah/stable:latest
       workingDir: $(workspaces.source.path)
       securityContext:
-        privileged: true
+        runAsUser: 0
+        capabilities:
+          add:
+            - SETFCAP
       command:
         - bash
         - -c
         - |
-          buildah bud --format=docker -t $(params.IMAGE_NAME) .
-          buildah push --tls-verify=false $(params.IMAGE_NAME)
+          set -e
+
+          buildah_root=/tmp/buildah-root
+          buildah_runroot=/tmp/buildah-runroot
+          mkdir -p "${buildah_root}" "${buildah_runroot}"
+
+          buildah --storage-driver=vfs \
+            --root "${buildah_root}" \
+            --runroot "${buildah_runroot}" \
+            bud --isolation=chroot --format=docker -t $(params.IMAGE_NAME) .
+
+          buildah --storage-driver=vfs \
+            --root "${buildah_root}" \
+            --runroot "${buildah_runroot}" \
+            push --tls-verify=false $(params.IMAGE_NAME)
 
 ---
 apiVersion: tekton.dev/v1beta1
