@@ -320,18 +320,16 @@ class TestShopcartService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_delete_shopcart_item_not_found(self):
-        """It should return 404 if item does not exist"""
+        """It should return 204 if item does not exist (idempotent)"""
         shopcart = self._create_shopcarts(1)[0]
 
         resp = self.client.delete(f"{BASE_URL}/{shopcart.id}/items/999999")
-        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertTrue(resp.is_json)
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_delete_shopcart_item_cart_not_found(self):
-        """It should return 404 if shopcart does not exist"""
+        """It should return 204 if shopcart does not exist (idempotent)"""
         resp = self.client.delete(f"{BASE_URL}/999999/items/1")
-        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertTrue(resp.is_json)
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
     ######################################################################
     # DELETE A SHOPCART
@@ -346,10 +344,9 @@ class TestShopcartService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_delete_shopcart_not_found(self):
-        """It should not Delete a Shopcart that does not exist"""
+        """It should return 204 for a Shopcart that does not exist (idempotent)"""
         resp = self.client.delete("/shopcarts/999999")
-        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertTrue(resp.is_json)
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_index(self):
         """It should return the index page"""
