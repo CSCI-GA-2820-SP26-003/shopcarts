@@ -216,11 +216,8 @@ class ShopcartResource(Resource):
         """Delete a shopcart"""
         app.logger.info("Request to delete shopcart with id=%s", shopcart_id)
         cart = Shopcart.find(shopcart_id)
-        if not cart:
-            return {
-                "error": "Not Found", "message": f"Shopcart with id '{shopcart_id}' was not found"
-                }, status.HTTP_404_NOT_FOUND
-        cart.delete()
+        if cart:
+            cart.delete()
         return "", status.HTTP_204_NO_CONTENT
 
 
@@ -336,15 +333,8 @@ class ItemResource(Resource):
             "Request to delete Item %s for Shopcart id: %s", item_id, shopcart_id
         )
         shopcart = Shopcart.find(shopcart_id)
-        if not shopcart:
-            return {
-                "error": "Not Found", "message": f"Shopcart with id '{shopcart_id}' was not found"
-                }, status.HTTP_404_NOT_FOUND
-        item = Item.find(item_id)
-        if (not item) or (item.shopcart_id != shopcart_id):
-            return {
-                "error": "Not Found", "message": f"Item with id '{item_id}' was not found in shopcart '{shopcart_id}'"
-                }, status.HTTP_404_NOT_FOUND
-
-        item.delete()
+        if shopcart:
+            item = Item.find(item_id)
+            if item and item.shopcart_id == shopcart_id:
+                item.delete()
         return "", status.HTTP_204_NO_CONTENT
